@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
+import { Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [role, setRole] = useState<'CITIZEN' | 'AUTHORITY'>('CITIZEN');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -79,11 +81,24 @@ export function LoginPage() {
               
               <Input 
                 label="Password" 
-                type="password" 
+                type={showPassword ? 'text' : 'password'} 
                 autoComplete="current-password" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-slate-400 hover:text-slate-500 focus:outline-none focus:text-slate-500"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" aria-hidden="true" />
+                    ) : (
+                      <Eye className="w-5 h-5" aria-hidden="true" />
+                    )}
+                  </button>
+                }
               />
 
               <div className="flex items-center justify-between">

@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent } from '../../components/ui/Card';
+import { Eye, EyeOff } from 'lucide-react';
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,10 +55,23 @@ export function RegisterPage() {
               
               <Input 
                 label="Password" 
-                type="password" 
+                type={showPassword ? 'text' : 'password'} 
                 autoComplete="new-password" 
                 required 
                 helperText="Must be at least 8 characters."
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-slate-400 hover:text-slate-500 focus:outline-none focus:text-slate-500"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" aria-hidden="true" />
+                    ) : (
+                      <Eye className="w-5 h-5" aria-hidden="true" />
+                    )}
+                  </button>
+                }
               />
 
               <div className="flex items-center">

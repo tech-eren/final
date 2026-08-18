@@ -14,8 +14,8 @@ const defaultIcon = new L.Icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
-// Default center: New York City
-const DEFAULT_CENTER: [number, number] = [40.7128, -74.0060];
+// Default center: Silchar, India
+const DEFAULT_CENTER: [number, number] = [24.8333, 92.7789];
 
 interface MapViewerProps {
   issues: Issue[];

@@ -6,10 +6,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   helperText?: string;
+  rightElement?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', id, ...props }, ref) => {
+  ({ label, error, helperText, rightElement, className = '', id, ...props }, ref) => {
     const inputId = id || label.toLowerCase().replace(/\s+/g, '-');
     const hasError = !!error;
 
@@ -34,12 +35,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={hasError ? `${inputId}-error` : helperText ? `${inputId}-description` : undefined}
             {...props}
           />
-          {hasError && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <AlertCircle className="w-5 h-5 text-red-500" aria-hidden="true" />
-            </div>
-          )}
-        </div>
+            {hasError && !rightElement && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <AlertCircle className="w-5 h-5 text-red-500" aria-hidden="true" />
+              </div>
+            )}
+            {rightElement && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                {rightElement}
+              </div>
+            )}
+          </div>
         {hasError ? (
           <p className="mt-2 text-sm text-red-600" id={`${inputId}-error`}>
             {error}

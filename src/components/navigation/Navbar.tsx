@@ -50,6 +50,9 @@ export function Navbar({ onMenuClick, showMenuButton = false, userRole = null }:
                 <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
                   Log in
                 </Link>
+                <Link to="/register" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                  Sign up
+                </Link>
                 <Button onClick={() => navigate('/report')} size="sm">
                   Report an Issue
                 </Button>

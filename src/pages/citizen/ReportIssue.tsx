@@ -38,7 +38,7 @@ export function ReportIssue() {
     category: 'Other',
   });
 
-  const [position, setPosition] = useState<[number, number]>([40.7128, -74.0060]);
+  const [position, setPosition] = useState<[number, number]>([24.8333, 92.7789]);
   const [imageUploaded, setImageUploaded] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
