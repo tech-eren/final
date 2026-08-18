@@ -1,5 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { Loader2, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';

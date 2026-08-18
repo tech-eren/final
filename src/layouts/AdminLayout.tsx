@@ -3,47 +3,40 @@ import { Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  ListTodo, 
-  ShieldCheck,
-  Building2,
-  BarChart3,
-  Settings
+  Settings, 
+  ShieldAlert,
+  Database
 } from 'lucide-react';
 import { Navbar } from '../components/navigation/Navbar';
 import { Sidebar } from '../components/navigation/Sidebar';
+import { FloatingAssistant } from '../components/ai/FloatingAssistant';
 import type { SidebarItem } from '../components/navigation/Sidebar';
 
 const adminNavigation: SidebarItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Issues', href: '/admin/issues', icon: ListTodo },
-  { name: 'Authorities', href: '/admin/authorities', icon: ShieldCheck },
-  { name: 'Departments', href: '/admin/departments', icon: Building2 },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'User Management', href: '/admin/users', icon: Users },
+  { name: 'System Settings', href: '/admin/settings', icon: Settings },
+  { name: 'Audit Logs', href: '/admin/logs', icon: ShieldAlert },
+  { name: 'Database Status', href: '/admin/database', icon: Database },
 ];
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      <Navbar 
-        onMenuClick={() => setSidebarOpen(true)} 
-        showMenuButton={true} 
-        userRole="ADMIN" 
-      />
+    <div className="min-h-screen bg-slate-50">
+      <Navbar onMenuClick={() => setSidebarOpen(true)} />
       
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar items={adminNavigation} isOpen={sidebarOpen} />
-        
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto focus:outline-none bg-slate-50">
-          <div className="py-6">
-            <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-              <Outlet />
-            </div>
-          </div>
+      <Sidebar 
+        items={adminNavigation}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Main Content */}
+      <div className="lg:pl-64 flex flex-col min-h-[calc(100vh-4rem)]">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+          <Outlet />
         </main>
       </div>
 
@@ -53,6 +46,9 @@ export function AdminLayout() {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+
+      {/* AI Assistant */}
+      <FloatingAssistant />
     </div>
   );
 }

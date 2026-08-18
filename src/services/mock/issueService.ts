@@ -114,5 +114,78 @@ export const issueService = {
     
     mockIssues[issueIndex] = updatedIssue;
     return updatedIssue;
+  },
+
+  getCivicInsights: async (): Promise<any[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return [
+      {
+        id: 'ins_1',
+        type: 'anomaly',
+        title: 'Spike in Road Damage Reports',
+        description: 'A 24% increase in pothole reports detected along the 4th Avenue corridor over the last 48 hours.',
+        severity: 'High',
+        actionSuggested: 'Deploy emergency patch crew to 4th Avenue.',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 'ins_2',
+        type: 'cluster',
+        title: 'Streetlight Outage Cluster',
+        description: '3 independent reports of broken streetlights in the Downtown zone suggest a systemic grid issue rather than isolated bulb failures.',
+        severity: 'Medium',
+        actionSuggested: 'Dispatch electrical team to inspect Downtown sector substation.',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'ins_3',
+        type: 'prediction',
+        title: 'Flood Risk: Centennial Park',
+        description: 'Based on weather forecasts and historical drainage failure data, there is an 85% probability of localized flooding near Centennial Park this weekend.',
+        severity: 'Critical',
+        actionSuggested: 'Preemptively clear storm drains in Sector 7.',
+        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  },
+
+  getSystemAnalytics: async () => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    return {
+      totalReports: 1245,
+      pendingReview: 142,
+      inProgress: 350,
+      resolved: 753,
+      resolutionRate: 60.5,
+      averageResolutionTimeHours: 48.2,
+      issuesByCategory: {
+        'Pothole': 350,
+        'Road Damage': 120,
+        'Garbage Accumulation': 240,
+        'Broken Streetlight': 180,
+        'Water Leakage': 95,
+        'Drainage Blockage': 110,
+        'Flooding': 45,
+        'Fallen Tree': 30,
+        'Traffic Signal': 55,
+        'Illegal Dumping': 20,
+        'Other': 0
+      },
+      issuesBySeverity: {
+        'Low': 450,
+        'Medium': 520,
+        'High': 200,
+        'Critical': 75
+      },
+      reportsOverTime: [
+        { date: 'Mon', count: 45 },
+        { date: 'Tue', count: 52 },
+        { date: 'Wed', count: 48 },
+        { date: 'Thu', count: 70 },
+        { date: 'Fri', count: 85 },
+        { date: 'Sat', count: 35 },
+        { date: 'Sun', count: 40 },
+      ]
+    };
   }
 };

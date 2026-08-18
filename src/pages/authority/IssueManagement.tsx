@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { Search, Filter, AlertTriangle, MoreVertical, CheckCircle2, ListTodo } from 'lucide-react';

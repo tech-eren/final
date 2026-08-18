@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/navigation/Navbar';
 import { Sidebar } from '../components/navigation/Sidebar';
+import { FloatingAssistant } from '../components/ai/FloatingAssistant';
 import type { SidebarItem } from '../components/navigation/Sidebar';
 
 const citizenNavigation: SidebarItem[] = [
@@ -53,6 +54,9 @@ export function CitizenLayout() {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+
+      {/* AI Assistant */}
+      <FloatingAssistant />
     </div>
   );
 }

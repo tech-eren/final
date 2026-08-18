@@ -99,6 +99,16 @@ export interface SocialDetection {
   imageUrl?: string;
 }
 
+export interface CivicInsight {
+  id: string;
+  type: 'anomaly' | 'cluster' | 'prediction';
+  title: string;
+  description: string;
+  severity: IssueSeverity;
+  actionSuggested: string;
+  timestamp: string;
+}
+
 // Notifications
 export type NotificationType = 'Report Update' | 'Assignment Update' | 'Resolution' | 'System Notification';
 

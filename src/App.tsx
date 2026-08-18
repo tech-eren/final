@@ -21,6 +21,11 @@ import { MapPage } from './pages/citizen/MapPage';
 // Authority Pages
 import { Dashboard as AuthorityDashboard } from './pages/authority/Dashboard';
 import { IssueManagement } from './pages/authority/IssueManagement';
+import { Intelligence } from './pages/authority/Intelligence';
+import { Analytics as AuthorityAnalytics } from './pages/authority/Analytics';
+
+// Admin Pages
+import { UserManagement } from './pages/admin/UserManagement';
 
 // Reusable Placeholder component for unbuilt pages
 function Placeholder({ title }: { title: string }) {
@@ -62,8 +67,8 @@ function App() {
               <Route path="dashboard" element={<AuthorityDashboard />} />
               <Route path="issues" element={<IssueManagement />} />
               <Route path="map" element={<Placeholder title="Authority Map" />} />
-              <Route path="intelligence" element={<Placeholder title="Civic Intelligence Feed" />} />
-              <Route path="analytics" element={<Placeholder title="Authority Analytics" />} />
+              <Route path="intelligence" element={<Intelligence />} />
+              <Route path="analytics" element={<AuthorityAnalytics />} />
               <Route path="notifications" element={<Placeholder title="Notifications" />} />
               <Route path="profile" element={<Placeholder title="Authority Profile" />} />
             </Route>
@@ -71,12 +76,10 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<Placeholder title="Admin Dashboard" />} />
-              <Route path="users" element={<Placeholder title="User Management" />} />
-              <Route path="issues" element={<Placeholder title="System Issues" />} />
-              <Route path="authorities" element={<Placeholder title="Authority Management" />} />
-              <Route path="departments" element={<Placeholder title="Department Management" />} />
-              <Route path="analytics" element={<Placeholder title="System Analytics" />} />
-              <Route path="settings" element={<Placeholder title="Platform Settings" />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="settings" element={<Placeholder title="System Settings" />} />
+              <Route path="logs" element={<Placeholder title="Audit Logs" />} />
+              <Route path="database" element={<Placeholder title="Database Status" />} />
             </Route>
           </Routes>
         </BrowserRouter>

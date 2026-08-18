@@ -10,6 +10,7 @@ export interface SidebarItem {
 interface SidebarProps {
   items: SidebarItem[];
   isOpen: boolean;
+  onClose?: () => void;
 }
 
 export function Sidebar({ items, isOpen }: SidebarProps) {
