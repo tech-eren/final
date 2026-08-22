@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MapPin, AlertTriangle, Clock, ThumbsUp, ThumbsDown, Award, Hash } from 'lucide-react';
-import { Card, CardContent } from '../../components/ui/Card';
+import { MapPin, Clock, ThumbsUp, ThumbsDown, Award } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
 import { issueService } from '../../services/mock/issueService';
 import type { Issue } from '../../types';
 

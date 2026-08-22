@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Bot, Send } from 'lucide-react';
 
 export function AISummarizerPanel() {
