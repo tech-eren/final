@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { ModalProvider } from './context/ModalContext';
 import { RootLayout } from './layouts/RootLayout';
@@ -17,7 +17,10 @@ import { Dashboard as CitizenDashboard } from './pages/citizen/Dashboard';
 import { ReportIssue } from './pages/citizen/ReportIssue';
 import { MyReports } from './pages/citizen/MyReports';
 import { MapPage } from './pages/citizen/MapPage';
-
+import { Feed } from './pages/citizen/Feed';
+import { Profile } from './pages/citizen/Profile';
+import { Saved } from './pages/citizen/Saved';
+import { Settings } from './pages/citizen/Settings';
 // Authority Pages
 import { Dashboard as AuthorityDashboard } from './pages/authority/Dashboard';
 import { IssueManagement } from './pages/authority/IssueManagement';
@@ -45,8 +48,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<RootLayout />}>
-              <Route index element={<LandingPage />} />
-              <Route path="explore" element={<ExplorePage />} />
+              <Route index element={<Navigate to="/login" replace />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
             </Route>
@@ -54,12 +56,12 @@ function App() {
             {/* Citizen Routes */}
             <Route path="/citizen" element={<CitizenLayout />}>
               <Route path="dashboard" element={<CitizenDashboard />} />
+              <Route path="feed" element={<Feed />} />
               <Route path="report" element={<ReportIssue />} />
               <Route path="reports" element={<MyReports />} />
-              <Route path="map" element={<MapPage />} />
-              <Route path="nearby" element={<Placeholder title="Nearby Issues" />} />
-              <Route path="notifications" element={<Placeholder title="Notifications" />} />
-              <Route path="profile" element={<Placeholder title="Citizen Profile" />} />
+              <Route path="saved" element={<Saved />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* Authority Routes */}

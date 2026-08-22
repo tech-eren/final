@@ -27,19 +27,14 @@ export function Navbar({ onMenuClick, showMenuButton = false, userRole = null }:
             <Link to="/" className="flex items-center flex-shrink-0 gap-2">
               <MapPin className="w-8 h-8 text-primary-600" />
               <span className="hidden text-xl font-bold tracking-tight sm:block text-slate-900">
-                CivicResolve
+                UbiqLoupe
               </span>
             </Link>
             
             {/* Public Navigation */}
             {!userRole && (
               <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
-                <Link to="/" className="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                  Home
-                </Link>
-                <Link to="/explore" className="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                  Explore Issues
-                </Link>
+                {/* Empty block for now since we removed Home and Explore */}
               </div>
             )}
           </div>

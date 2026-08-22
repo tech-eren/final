@@ -36,7 +36,7 @@ export function LandingPage() {
       <div className="py-16 bg-white lg:py-24">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-slate-900">How CivicResolve Works</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">How UbiqLoupe Works</h2>
             <p className="max-w-2xl mx-auto mt-4 text-xl text-slate-500">
               Three simple steps to make your neighborhood better.
             </p>

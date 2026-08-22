@@ -87,6 +87,13 @@ const saveIssues = () => {
 };
 
 export const issueService = {
+  getAllIssues: async (): Promise<Issue[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return [...mockIssues].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  },
+
   getIssuesByReporter: async (reporterId: string): Promise<Issue[]> => {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 800));

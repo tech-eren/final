@@ -23,7 +23,7 @@ export function RootLayout() {
         <footer className="py-8 bg-white border-t border-slate-200">
           <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <p className="text-sm text-center text-slate-500">
-              © {new Date().getFullYear()} CivicResolve. All rights reserved.
+              © {new Date().getFullYear()} UbiqLoupe. All rights reserved.
             </p>
           </div>
         </footer>

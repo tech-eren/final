@@ -1,105 +1,113 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Card, CardContent } from '../../components/ui/Card';
 import { issueService } from '../../services/mock/issueService';
 import type { Issue } from '../../types';
 
 export function MyReports() {
+  const [filter, setFilter] = useState<'Submitted' | 'In Progress' | 'Resolved' | 'All'>('All');
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchIssues = async () => {
+    const fetchMyIssues = async () => {
+      setLoading(true);
       try {
         const data = await issueService.getIssuesByReporter('usr_1');
         setIssues(data);
-      } catch (error) {
-        console.error('Failed to fetch issues', error);
+      } catch (e) {
+        console.error(e);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    fetchIssues();
+    fetchMyIssues();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
-      </div>
-    );
-  }
+  const displayedIssues = issues.filter(issue => filter === 'All' || issue.status === filter);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Reports</h1>
-          <p className="text-sm text-slate-500">Track the status of the civic issues you have reported.</p>
-        </div>
-        <Link to="/citizen/report">
-          <Button>Report New Issue</Button>
-        </Link>
+    <div className="animate-fade-in">
+      <div className="mb-10 animate-slide-down">
+        <span className="block text-sm font-semibold uppercase tracking-widest text-accent mb-2">Case Tracker</span>
+        <h1 className="m-0 text-4xl font-bold tracking-tight mb-2">My Cases</h1>
+        <p className="text-zinc-400 text-lg m-0">Track the status of your reported issues.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {issues.length === 0 ? (
-          <div className="col-span-full p-12 text-center bg-white border border-slate-200 rounded-lg border-dashed">
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No reports yet</h3>
-            <p className="text-slate-500 mb-4">You haven't reported any issues yet. Help improve your community today.</p>
-            <Link to="/citizen/report">
-              <Button variant="outline">Report an Issue</Button>
-            </Link>
-          </div>
-        ) : (
-          issues.map((issue) => (
-            <Card key={issue.id} className="flex flex-col h-full">
-              {issue.imageUrl ? (
-                <div className="relative h-48 w-full bg-slate-200">
-                  <img 
-                    src={issue.imageUrl} 
-                    alt={issue.category} 
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full bg-white text-slate-800 shadow-sm">
-                    {issue.category}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-48 w-full bg-slate-100 flex items-center justify-center text-slate-400">
-                  No Image Available
-                </div>
-              )}
-              <CardContent className="flex flex-col flex-grow">
-                <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{issue.category}</h3>
-                
-                <div className="flex items-center mt-2 text-sm text-slate-500">
-                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span className="truncate">{issue.location.address}</span>
-                </div>
-                
-                <div className="flex items-center mt-1 text-sm text-slate-500">
-                  <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
-                </div>
+      <div className="flex flex-wrap gap-3 mb-10">
+        {[
+          { id: 'All', label: 'All Cases' },
+          { id: 'Submitted', label: 'Submitted' },
+          { id: 'In Progress', label: 'In Progress' },
+          { id: 'Resolved', label: 'Resolved' }
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id as any)}
+            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 border ${
+              filter === f.id
+                ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd border-transparent text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]'
+                : 'bg-black/20 border-dark-border text-zinc-400 hover:text-white hover:bg-black/40'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-                <div className="mt-auto pt-4 flex items-center justify-between">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                    ${issue.status === 'Submitted' ? 'bg-red-100 text-red-800' : 
-                      issue.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-green-100 text-green-800'}`
+      {loading ? (
+        <div className="flex justify-center p-10">
+           <div className="w-8 h-8 border-4 border-accent rounded-full border-t-transparent animate-spin"></div>
+        </div>
+      ) : displayedIssues.length === 0 ? (
+        <div className="bg-dark-card border border-dark-border rounded-2xl p-10 text-center backdrop-blur-md">
+          <p className="text-zinc-400 text-lg m-0">No cases found in this category.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {displayedIssues.map((issue, index) => {
+             // Calculate progress bar width based on status
+             let progress = 0;
+             if (issue.status === 'Submitted') progress = 10;
+             else if (issue.status === 'In Progress') progress = 60;
+             else if (issue.status === 'Resolved') progress = 100;
+
+             return (
+              <div 
+                key={issue.id}
+                className="bg-dark-card border border-dark-border rounded-2xl p-6 backdrop-blur-md transition-all duration-300 animate-fade-in flex flex-col hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:border-accent/30" 
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="m-0 text-xl font-semibold text-white">{issue.category}</h3>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border
+                      ${issue.status === 'Submitted' ? 'bg-red-500/20 text-red-300 border-red-500/30' : 
+                        issue.status === 'In Progress' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 
+                        'bg-green-500/20 text-green-300 border-green-500/30'}`
                   }>
-                    {issue.status === 'Submitted' && <AlertTriangle className="w-3 h-3 mr-1" />}
                     {issue.status}
                   </span>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                
+                <p className="text-zinc-400 mb-2 text-sm">{new Date(issue.createdAt).toLocaleDateString()} • {issue.location.address}</p>
+                <p className="text-zinc-300 mb-6 text-base line-clamp-2">{issue.description}</p>
+                
+                <div className="bg-black/40 h-2 rounded-full overflow-hidden mb-2">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                       issue.status === 'Resolved' ? 'bg-green-500' : 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd'
+                    }`}
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-zinc-500 text-right m-0">
+                  {issue.status === 'Submitted' ? 'Awaiting review' : 
+                   issue.status === 'In Progress' ? 'City crew assigned' : 
+                   'Case closed'}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   );
 }

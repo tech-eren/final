@@ -1,40 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'leaflet/dist/leaflet.css';
 
 @theme {
-  --color-primary-50: #f0f4f8;
-  --color-primary-100: #d9e2ec;
-  --color-primary-200: #bcccdc;
-  --color-primary-300: #9fb3c8;
-  --color-primary-400: #829ab1;
-  --color-primary-500: #627d98;
-  --color-primary-600: #486581;
-  --color-primary-700: #334e68;
-  --color-primary-800: #243b53;
-  --color-primary-900: #102a43;
+  --color-dark-bg: #09090b;
+  --color-dark-card: rgba(24, 24, 27, 0.6);
+  --color-dark-border: rgba(255, 255, 255, 0.08);
+  --color-dark-glass: rgba(9, 9, 11, 0.75);
+  
+  --color-accent: #8b5cf6;
+  --color-accent-gradientStart: #6366f1;
+  --color-accent-gradientEnd: #a855f7;
 
-  --color-civic-blue: #1a56db;
-  --color-civic-dark: #1e3a8a;
+  --font-sans: 'Outfit', Inter, Roboto, sans-serif;
 
-  --color-semantic-success: #10b981;
-  --color-semantic-warning: #f59e0b;
-  --color-semantic-error: #ef4444;
-  --color-semantic-info: #3b82f6;
+  --animate-slide-down: slideDown 0.5s ease-out;
+  --animate-fade-in: fadeIn 0.6s ease-out forwards;
 
-  --font-sans: Inter, Roboto, sans-serif;
+  @keyframes slideDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
 }
 
 @layer base {
-  :root {
-    --background: #ffffff;
-    --foreground: #0f172a;
-    --radius: 0.5rem;
-  }
-  
   body {
-    background-color: #f8fafc; /* bg-slate-50 */
-    color: #0f172a; /* text-slate-900 */
-    font-family: Inter, Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--color-dark-bg);
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.12), transparent 25%);
+    background-attachment: fixed;
+    color: #fafafa;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }

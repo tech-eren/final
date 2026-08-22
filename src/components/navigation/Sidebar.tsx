@@ -9,85 +9,53 @@ export interface SidebarItem {
 
 interface SidebarProps {
   items: SidebarItem[];
-  isOpen: boolean;
-  onClose?: () => void;
+  isOpen?: boolean;
 }
 
-export function Sidebar({ items, isOpen }: SidebarProps) {
+export function Sidebar({ items, isOpen = true }: SidebarProps) {
   return (
-    <>
-      {/* Mobile sidebar (hidden on lg, controlled by isOpen) */}
-      <div className={`fixed inset-0 z-40 lg:hidden ${isOpen ? 'block' : 'hidden'}`}>
-        {/* Backdrop */}
-        <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75"></div>
-        
-        <div className="relative flex flex-col flex-1 w-full max-w-xs pt-5 pb-4 bg-white min-h-screen">
-          <div className="flex-1 h-0 mt-5 overflow-y-auto">
-            <nav className="px-2 space-y-1">
-              {items.map((item) => (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    `group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                      isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={`mr-4 flex-shrink-0 h-6 w-6 ${
-                          isActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-500'
-                        }`}
-                        aria-hidden="true"
-                      />
-                      {item.name}
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
+    <aside className={`w-[280px] bg-dark-glass backdrop-blur-xl border-r border-dark-border p-8 sticky top-0 h-screen flex-col lg:flex ${isOpen ? 'flex' : 'hidden'}`}>
+      <div className="text-3xl font-bold bg-gradient-to-br from-accent-gradientStart to-accent-gradientEnd bg-clip-text text-transparent mb-12 pl-2 tracking-tight">
+        UbiqLoupe
+      </div>
+      
+      <nav className="flex flex-col gap-2 flex-1">
+        {items.map((item) => (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            className={({ isActive }) =>
+              `group flex items-center gap-4 p-4 text-[1.1rem] font-medium rounded-xl transition-all duration-300 ${
+                isActive
+                  ? 'bg-accent/10 text-white border border-accent/20'
+                  : 'text-zinc-400 hover:bg-white/5 hover:text-white hover:translate-x-1'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  className={`w-6 h-6 transition-transform duration-300 ${
+                    isActive ? 'text-accent' : 'group-hover:scale-110 group-hover:text-accent'
+                  }`}
+                  strokeWidth={2}
+                />
+                {item.name}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+      
+      <div className="mt-auto pt-8 border-t border-dark-border flex items-center gap-4">
+        <div className="w-11 h-11 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-zinc-400 text-lg shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 14h20"/><path d="M6.5 14v-2c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5v2"/><path d="M12 21v-4"/><path d="M12 2v2"/><path d="M4 14l-2 4h20l-2-4"/></svg>
+        </div>
+        <div>
+          <h4 className="m-0 text-white text-base font-semibold">Anonymous Citizen</h4>
+          <p className="m-0 text-zinc-500 text-sm">Incognito Mode</p>
         </div>
       </div>
-
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className="flex flex-col w-64 border-r border-slate-200 bg-white">
-          <div className="flex flex-col flex-1 h-0 overflow-y-auto">
-            <nav className="flex-1 px-2 py-4 space-y-1">
-              {items.map((item) => (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    `group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                      isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon
-                        className={`mr-3 flex-shrink-0 h-5 w-5 ${
-                          isActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-500'
-                        }`}
-                        aria-hidden="true"
-                      />
-                      {item.name}
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-    </>
+    </aside>
   );
 }
