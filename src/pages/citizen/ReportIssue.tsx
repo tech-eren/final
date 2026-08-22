@@ -58,9 +58,25 @@ export function ReportIssue() {
     addToast({ title: 'Detecting location...', type: 'info' });
     
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPosition([pos.coords.latitude, pos.coords.longitude]);
-        addToast({ title: 'Location detected successfully', type: 'success' });
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setPosition([lat, lon]);
+        
+        try {
+          // Fetch human-readable address using Reverse Geocoding (Nominatim API)
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+          const data = await response.json();
+          if (data && data.display_name) {
+            setFormData(prev => ({ ...prev, address: data.display_name }));
+            addToast({ title: 'Location detected successfully', type: 'success' });
+          } else {
+            addToast({ title: 'Location found, but address could not be resolved', type: 'success' });
+          }
+        } catch (error) {
+          console.error("Geocoding error:", error);
+          addToast({ title: 'Location found, but address fetch failed', type: 'success' });
+        }
       },
       (err) => {
         console.error(err);
