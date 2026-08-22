@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 // Initialize the SDK. 
@@ -30,41 +30,37 @@ export const aiService = {
     });
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
+      const response = await ai.interactions.create({
+        model: 'gemini-3.6-flash',
+        input: [
           {
-            role: 'user',
-            parts: [
-              {
-                text: 'Analyze this image. Determine if it contains a civic infrastructure issue (like a pothole, road damage, broken streetlight, garbage accumulation, water leakage, drainage blockage, flooding, fallen tree, traffic signal malfunction, or illegal dumping). If it does NOT contain any of these (e.g., it is a random picture, a selfie, a cat, a clean road), return hasIssue false. If it DOES contain an issue, return hasIssue true, and provide a short title, description, and the category.',
-              },
-              {
-                inlineData: {
-                  mimeType: file.type,
-                  data: base64Data,
-                },
-              },
-            ],
+            type: 'text',
+            text: 'Analyze this image. Determine if it contains a civic infrastructure issue (like a pothole, road damage, broken streetlight, garbage accumulation, water leakage, drainage blockage, flooding, fallen tree, traffic signal malfunction, or illegal dumping). If it does NOT contain any of these (e.g., it is a random picture, a selfie, a cat, a clean road), return hasIssue false. If it DOES contain an issue, return hasIssue true, and provide a short title, description, and the category.',
+          },
+          {
+            type: 'image',
+            mime_type: file.type,
+            data: base64Data,
           },
         ],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
+        response_format: {
+          type: 'text',
+          mime_type: 'application/json',
+          schema: {
+            type: 'object',
             properties: {
-              hasIssue: { type: Type.BOOLEAN },
-              category: { type: Type.STRING },
-              title: { type: Type.STRING },
-              description: { type: Type.STRING },
+              hasIssue: { type: 'boolean' },
+              category: { type: 'string' },
+              title: { type: 'string' },
+              description: { type: 'string' },
             },
             required: ['hasIssue'],
           },
         },
       });
 
-      if (response.text) {
-        return JSON.parse(response.text) as AIAnalysisResult;
+      if (response.output_text) {
+        return JSON.parse(response.output_text) as AIAnalysisResult;
       }
       return { hasIssue: false };
     } catch (error) {
