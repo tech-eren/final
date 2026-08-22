@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -28,9 +28,12 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
     click(e) {
       const newPos: [number, number] = [e.latlng.lat, e.latlng.lng];
       onChange(newPos);
-      map.flyTo(newPos, map.getZoom());
     },
   });
+
+  useEffect(() => {
+    map.flyTo(position, map.getZoom());
+  }, [position, map]);
 
   const eventHandlers = useMemo(
     () => ({
@@ -40,11 +43,10 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
           const latLng = marker.getLatLng();
           const newPos: [number, number] = [latLng.lat, latLng.lng];
           onChange(newPos);
-          map.flyTo(newPos, map.getZoom());
         }
       },
     }),
-    [onChange, map]
+    [onChange]
   );
 
   return (
