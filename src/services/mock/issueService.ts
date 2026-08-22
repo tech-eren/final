@@ -185,7 +185,7 @@ export const issueService = {
       'Low': 0, 'Medium': 0, 'High': 0, 'Critical': 0
     };
 
-    const reportsOverTime = [];
+    const reportsOverTime: { date: string; count: number }[] = [];
     const now = Date.now();
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now - i * 24 * 60 * 60 * 1000);
