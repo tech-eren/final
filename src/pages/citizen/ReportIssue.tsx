@@ -5,10 +5,11 @@ import { useToast } from '../../context/ToastContext';
 import { aiService } from '../../services/aiService';
 
 export function ReportIssue() {
-  const [location, setLocation] = useState<[number, number]>([24.8333, 92.7789]); // Default to Silchar, Assam
+  const [location, setLocation] = useState<[number, number]>([24.83, 92.79]); // Default to Silchar, Assam
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('infrastructure');
+  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [address, setAddress] = useState('');
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -82,8 +83,8 @@ export function ReportIssue() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) {
-      addToast({ title: 'Validation Error', message: 'Please fill in all required fields.', type: 'error' });
+    if (!title || !description || !category) {
+      addToast({ title: 'Validation Error', message: 'Please fill in all required fields including category.', type: 'error' });
       return;
     }
     // Handle form submission logic here
@@ -92,9 +93,10 @@ export function ReportIssue() {
     // Reset form
     setTitle('');
     setDescription('');
-    setCategory('infrastructure');
+    setCategory('');
     setSelectedFile(null);
     setPreviewUrl(null);
+    setAddress('');
   };
 
   return (
@@ -176,8 +178,9 @@ export function ReportIssue() {
                 <select 
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-black/20 border border-dark-border text-white p-3 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all appearance-none cursor-pointer"
+                  className={`w-full bg-black/20 border border-dark-border p-3 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all appearance-none cursor-pointer ${category === '' ? 'text-zinc-500' : 'text-white'}`}
                 >
+                  <option value="" disabled hidden>Select Category</option>
                   <option value="infrastructure" className="bg-dark-bg text-white">Infrastructure</option>
                   <option value="safety" className="bg-dark-bg text-white">Safety</option>
                   <option value="noise" className="bg-dark-bg text-white">Noise Complaint</option>
@@ -210,6 +213,17 @@ export function ReportIssue() {
                 {isDetectingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
                 Detect my location
               </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-zinc-500 text-xs mb-1">Address or Cross Street</label>
+              <input 
+                type="text" 
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full bg-black/20 border border-dark-border text-white p-3 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all placeholder:text-zinc-600"
+                placeholder="123 Main St..." 
+              />
             </div>
             
             <LocationPicker 

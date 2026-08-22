@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { ModalProvider } from './context/ModalContext';
+import { UserProvider } from './context/UserContext';
 import { RootLayout } from './layouts/RootLayout';
 import { CitizenLayout } from './layouts/CitizenLayout';
 import { AuthorityLayout } from './layouts/AuthorityLayout';
@@ -16,7 +17,7 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { Dashboard as CitizenDashboard } from './pages/citizen/Dashboard';
 import { ReportIssue } from './pages/citizen/ReportIssue';
 import { MyReports } from './pages/citizen/MyReports';
-import { MapPage } from './pages/citizen/MapPage';
+import { Map } from './pages/citizen/Map';
 import { Feed } from './pages/citizen/Feed';
 import { Profile } from './pages/citizen/Profile';
 import { Saved } from './pages/citizen/Saved';
@@ -42,22 +43,24 @@ function Placeholder({ title }: { title: string }) {
 
 function App() {
   return (
-    <ToastProvider>
-      <ModalProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<RootLayout />}>
-              <Route index element={<Navigate to="/login" replace />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
-            </Route>
-            
-            {/* Citizen Routes */}
-            <Route path="/citizen" element={<CitizenLayout />}>
-              <Route path="dashboard" element={<CitizenDashboard />} />
+    <UserProvider>
+      <ToastProvider>
+        <ModalProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<RootLayout />}>
+                <Route index element={<Navigate to="/login" replace />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+              </Route>
+              
+              {/* Citizen Routes */}
+              <Route path="/citizen" element={<CitizenLayout />}>
+                <Route path="dashboard" element={<CitizenDashboard />} />
               <Route path="feed" element={<Feed />} />
               <Route path="report" element={<ReportIssue />} />
+              <Route path="map" element={<Map />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="saved" element={<Saved />} />
               <Route path="settings" element={<Settings />} />
@@ -87,6 +90,7 @@ function App() {
         </BrowserRouter>
       </ModalProvider>
     </ToastProvider>
+    </UserProvider>
   );
 }
 

@@ -1,4 +1,18 @@
+import { useState } from 'react';
+import { useUser } from '../../context/UserContext';
+
 export function Settings() {
+  const { user, updateUser } = useUser();
+  const [displayName, setDisplayName] = useState(user.displayName);
+  const [email, setEmail] = useState(user.email);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleSave = () => {
+    updateUser({ displayName, email });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="mb-10 animate-slide-down">
@@ -15,7 +29,8 @@ export function Settings() {
           <input 
             type="text" 
             className="w-full bg-black/20 border border-dark-border text-white p-4 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all"
-            defaultValue="User Name" 
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
           />
         </div>
         
@@ -24,12 +39,16 @@ export function Settings() {
           <input 
             type="email" 
             className="w-full bg-black/20 border border-dark-border text-white p-4 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all"
-            defaultValue="user@example.com" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         
-        <button className="bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white border-none px-6 py-3 rounded-xl font-semibold text-base cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(139,92,246,0.4)] transition-all">
-          Save Changes
+        <button 
+          onClick={handleSave}
+          className="bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white border-none px-6 py-3 rounded-xl font-semibold text-base cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(139,92,246,0.4)] transition-all flex items-center gap-2"
+        >
+          {isSaved ? 'Saved!' : 'Save Changes'}
         </button>
       </div>
 

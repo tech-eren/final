@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCircle, Heart, AlertTriangle } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
+import { issueService } from '../../services/mock/issueService';
 
 interface Notification {
   id: string;
@@ -10,36 +12,10 @@ interface Notification {
   read: boolean;
 }
 
-const DUMMY_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    title: 'Status Update',
-    message: 'Your report "Broken Streetlight on Park Rd" is now In Progress.',
-    type: 'status',
-    time: '10m ago',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'New Like',
-    message: 'An anonymous citizen liked your report about the pothole.',
-    type: 'like',
-    time: '1h ago',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'City Alert',
-    message: 'Heavy rain expected this evening. Please drive safely.',
-    type: 'alert',
-    time: '3h ago',
-    read: true,
-  }
-];
-
 export function NotificationDropdown() {
+  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -53,6 +29,45 @@ export function NotificationDropdown() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const fetchDynamicNotifications = async () => {
+      try {
+        const allIssues = await issueService.getAllIssues();
+        const relevantIssues = allIssues.filter(
+          i => i.reportedBy === 'usr_1' || user.likedIssues.includes(i.id)
+        );
+
+        setNotifications(prev => {
+          const newNotifs = [...prev];
+          let changed = false;
+
+          relevantIssues.forEach(issue => {
+            if (issue.status === 'In Progress' || issue.status === 'Resolved') {
+              const id = `status-${issue.id}-${issue.status}`;
+              if (!newNotifs.find(n => n.id === id)) {
+                newNotifs.unshift({
+                  id,
+                  title: 'Case Addressed',
+                  message: `The case "${issue.category}" at ${issue.location.address} is now ${issue.status}.`,
+                  type: 'status',
+                  time: 'Just now',
+                  read: false,
+                });
+                changed = true;
+              }
+            }
+          });
+
+          return changed ? newNotifs : prev;
+        });
+      } catch (error) {
+        console.error('Failed to generate notifications', error);
+      }
+    };
+    
+    fetchDynamicNotifications();
+  }, [user.likedIssues]);
 
   const markAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));

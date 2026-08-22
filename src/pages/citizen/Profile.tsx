@@ -1,4 +1,12 @@
+import { Eye, EyeOff } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
+
 export function Profile() {
+  const { user, toggleAnonymity } = useUser();
+  
+  // Get first letter for avatar
+  const initial = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+  
   return (
     <div className="animate-fade-in">
       <div className="mb-10 animate-slide-down">
@@ -8,11 +16,33 @@ export function Profile() {
       </div>
       
       <div className="bg-dark-card border border-dark-border rounded-2xl p-12 text-center backdrop-blur-md animate-fade-in" style={{ animationDelay: '0.1s' }}>
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent-gradientStart to-accent-gradientEnd flex items-center justify-center font-bold text-white text-4xl mx-auto mb-6 shadow-[0_8px_24px_rgba(139,92,246,0.4)]">
-          U
+        
+        {user.isAnonymous ? (
+          <div className="w-24 h-24 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 mx-auto mb-6 shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 14h20"/><path d="M6.5 14v-2c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5v2"/><path d="M12 21v-4"/><path d="M12 2v2"/><path d="M4 14l-2 4h20l-2-4"/></svg>
+          </div>
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent-gradientStart to-accent-gradientEnd flex items-center justify-center font-bold text-white text-4xl mx-auto mb-6 shadow-[0_8px_24px_rgba(139,92,246,0.4)]">
+            {initial}
+          </div>
+        )}
+
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <h2 className="m-0 text-3xl font-bold text-white">
+            {user.isAnonymous ? 'Anonymous' : user.displayName}
+          </h2>
+          <button 
+            onClick={toggleAnonymity}
+            className="bg-transparent border-none text-zinc-400 hover:text-white cursor-pointer transition-colors p-2 rounded-full hover:bg-white/10 flex items-center justify-center"
+            title={user.isAnonymous ? "Disable Anonymity" : "Enable Anonymity"}
+          >
+            {user.isAnonymous ? <EyeOff size={24} /> : <Eye size={24} />}
+          </button>
         </div>
-        <h2 className="m-0 mb-2 text-3xl font-bold text-white">User Name</h2>
-        <p className="text-zinc-400 mb-10 text-lg">@username • Member since 2026</p>
+        
+        <p className="text-zinc-400 mb-10 text-lg">
+          {user.isAnonymous ? 'Hidden Email' : user.email} • Member since 2026
+        </p>
         
         <div className="flex justify-center gap-16 mb-12 bg-black/20 p-6 rounded-2xl border border-dark-border max-w-md mx-auto">
           <div>

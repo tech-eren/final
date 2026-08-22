@@ -68,7 +68,7 @@ export function LocationPicker({ position, onChange, className = "h-64 w-full ro
     <div className={`overflow-hidden border border-slate-300 rounded-md ${className}`}>
       <MapContainer 
         center={position} 
-        zoom={15} 
+        zoom={13} 
         scrollWheelZoom={true}
         className="h-full w-full"
       >

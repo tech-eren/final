@@ -18,7 +18,7 @@ export function LoginPage() {
     setTimeout(() => {
       setIsLoading(false);
       if (role === 'CITIZEN') {
-        navigate('/citizen/dashboard');
+        navigate('/citizen/feed');
       } else {
         navigate('/authority/dashboard');
       }

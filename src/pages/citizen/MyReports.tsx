@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { issueService } from '../../services/mock/issueService';
+import { useUser } from '../../context/UserContext';
+import { Heart, Search } from 'lucide-react';
 import type { Issue } from '../../types';
 
 export function MyReports() {
+  const { user } = useUser();
   const [filter, setFilter] = useState<'Submitted' | 'In Progress' | 'Resolved' | 'All'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,8 +15,11 @@ export function MyReports() {
     const fetchMyIssues = async () => {
       setLoading(true);
       try {
-        const data = await issueService.getIssuesByReporter('usr_1');
-        setIssues(data);
+        const allIssues = await issueService.getAllIssues();
+        const relevantIssues = allIssues.filter(
+          i => i.reportedBy === 'usr_1' || user.likedIssues.includes(i.id)
+        );
+        setIssues(relevantIssues);
       } catch (e) {
         console.error(e);
       } finally {
@@ -20,37 +27,63 @@ export function MyReports() {
       }
     };
     fetchMyIssues();
-  }, []);
+  }, [user.likedIssues]);
 
-  const displayedIssues = issues.filter(issue => filter === 'All' || issue.status === filter);
+  const displayedIssues = issues.filter(issue => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matches = 
+        issue.category.toLowerCase().includes(q) ||
+        issue.description.toLowerCase().includes(q) ||
+        (issue.hashtags && issue.hashtags.some(tag => tag.toLowerCase().includes(q)));
+      if (!matches) return false;
+    }
+    return filter === 'All' || issue.status === filter;
+  });
 
   return (
     <div className="animate-fade-in">
       <div className="mb-10 animate-slide-down">
         <span className="block text-sm font-semibold uppercase tracking-widest text-accent mb-2">Case Tracker</span>
         <h1 className="m-0 text-4xl font-bold tracking-tight mb-2">My Cases</h1>
-        <p className="text-zinc-400 text-lg m-0">Track the status of your reported issues.</p>
+        <p className="text-zinc-400 text-lg m-0">Track the status of your reported and liked issues.</p>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-10">
-        {[
-          { id: 'All', label: 'All Cases' },
-          { id: 'Submitted', label: 'Submitted' },
-          { id: 'In Progress', label: 'In Progress' },
-          { id: 'Resolved', label: 'Resolved' }
-        ].map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id as any)}
-            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 border ${
-              filter === f.id
-                ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd border-transparent text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]'
-                : 'bg-black/20 border-dark-border text-zinc-400 hover:text-white hover:bg-black/40'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div className="flex flex-wrap gap-3">
+          {[
+            { id: 'All', label: 'All Cases' },
+            { id: 'Submitted', label: 'Submitted' },
+            { id: 'In Progress', label: 'In Progress' },
+            { id: 'Resolved', label: 'Resolved' }
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id as any)}
+              className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 border ${
+                filter === f.id
+                  ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd border-transparent text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]'
+                  : 'bg-black/20 border-dark-border text-zinc-400 hover:text-white hover:bg-black/40'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full md:w-72 flex-shrink-0">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+            <Search className="w-5 h-5" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search my cases..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-black/20 border border-dark-border text-white pl-10 pr-4 py-3 rounded-2xl font-sans text-sm focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all placeholder:text-zinc-600"
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -69,15 +102,26 @@ export function MyReports() {
              if (issue.status === 'Submitted') progress = 10;
              else if (issue.status === 'In Progress') progress = 60;
              else if (issue.status === 'Resolved') progress = 100;
+             
+             const isLikedNotReported = issue.reportedBy !== 'usr_1';
 
              return (
               <div 
                 key={issue.id}
-                className="bg-dark-card border border-dark-border rounded-2xl p-6 backdrop-blur-md transition-all duration-300 animate-fade-in flex flex-col hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:border-accent/30" 
+                className={`bg-dark-card border rounded-2xl p-6 backdrop-blur-md transition-all duration-300 animate-fade-in flex flex-col hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] ${
+                  isLikedNotReported ? 'border-accent/40 bg-accent/5' : 'border-dark-border hover:border-accent/30'
+                }`} 
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="m-0 text-xl font-semibold text-white">{issue.category}</h3>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="m-0 text-xl font-semibold text-white">{issue.category}</h3>
+                    {isLikedNotReported && (
+                      <span className="flex items-center gap-1 text-xs text-accent font-medium">
+                        <Heart className="w-3 h-3" fill="currentColor" /> Liked Case
+                      </span>
+                    )}
+                  </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border
                       ${issue.status === 'Submitted' ? 'bg-red-500/20 text-red-300 border-red-500/30' : 
                         issue.status === 'In Progress' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 

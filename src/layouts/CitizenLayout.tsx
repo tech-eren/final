@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { 
   Home,
   LayoutList,
   FileText,
   User,
   Bookmark,
-  Settings
+  Settings,
+  Map as MapIcon
 } from 'lucide-react';
 import { Sidebar } from '../components/navigation/Sidebar';
 import type { SidebarItem } from '../components/navigation/Sidebar';
@@ -15,17 +16,20 @@ import { AISummarizerPanel } from '../components/ui/AISummarizerPanel';
 import { NotificationDropdown } from '../components/navigation/NotificationDropdown';
 
 const citizenNavigation: SidebarItem[] = [
+  { name: 'Feed', href: '/citizen/feed', icon: LayoutList },
   { name: 'Index', href: '/citizen/dashboard', icon: Home },
   { name: 'Profile', href: '/citizen/profile', icon: User },
-  { name: 'Feed', href: '/citizen/feed', icon: LayoutList },
-  { name: 'Cases', href: '/citizen/reports', icon: FileText },
+  { name: 'My Cases', href: '/citizen/reports', icon: FileText },
   { name: 'Report', href: '/citizen/report', icon: FileText },
+  { name: 'Map', href: '/citizen/map', icon: MapIcon },
   { name: 'Saved Posts', href: '/citizen/saved', icon: Bookmark },
   { name: 'Settings', href: '/citizen/settings', icon: Settings },
 ];
 
 export function CitizenLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const isMapRoute = location.pathname === '/citizen/map';
 
   return (
     <div className="flex min-h-screen max-w-[1400px] mx-auto text-white relative">
@@ -58,7 +62,7 @@ export function CitizenLayout() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-[800px] mx-auto pt-24 lg:pt-16 px-6 lg:px-10 pb-20 focus:outline-none overflow-y-auto">
+      <main className={`flex-1 w-full pt-24 lg:pt-16 px-6 lg:px-10 pb-20 focus:outline-none overflow-y-auto ${isMapRoute ? 'max-w-none' : 'max-w-[800px] mx-auto'}`}>
         <Outlet />
       </main>
 
