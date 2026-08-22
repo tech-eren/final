@@ -38,7 +38,7 @@ export function MapViewer({
       <MapContainer 
         center={center} 
         zoom={zoom} 
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
         className="h-full w-full"
       >
         <TileLayer

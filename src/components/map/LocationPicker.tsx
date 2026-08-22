@@ -24,11 +24,11 @@ interface LocationPickerProps {
 
 function LocationMarker({ position, onChange }: LocationPickerProps) {
   const markerRef = useRef<L.Marker>(null);
-  
-  // Update position on map click
-  useMapEvents({
+  const map = useMapEvents({
     click(e) {
-      onChange([e.latlng.lat, e.latlng.lng]);
+      const newPos: [number, number] = [e.latlng.lat, e.latlng.lng];
+      onChange(newPos);
+      map.flyTo(newPos, map.getZoom());
     },
   });
 
@@ -38,11 +38,13 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
         const marker = markerRef.current;
         if (marker != null) {
           const latLng = marker.getLatLng();
-          onChange([latLng.lat, latLng.lng]);
+          const newPos: [number, number] = [latLng.lat, latLng.lng];
+          onChange(newPos);
+          map.flyTo(newPos, map.getZoom());
         }
       },
     }),
-    [onChange]
+    [onChange, map]
   );
 
   return (
@@ -53,7 +55,7 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
       ref={markerRef}
     >
       <Popup minWidth={90}>
-        <span className="text-sm font-medium">Drag me to the exact location</span>
+        <span className="text-sm font-medium">Drag me or click anywhere on the map</span>
       </Popup>
     </Marker>
   );
@@ -65,7 +67,7 @@ export function LocationPicker({ position, onChange, className = "h-64 w-full ro
       <MapContainer 
         center={position} 
         zoom={15} 
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
         className="h-full w-full"
       >
         <TileLayer

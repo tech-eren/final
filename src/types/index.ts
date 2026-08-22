@@ -1,5 +1,5 @@
 // User Roles and Basic Info
-export type UserRole = 'CITIZEN' | 'AUTHORITY' | 'ADMIN';
+export type UserRole = 'CITIZEN' | 'AUTHORITY' | 'ADMIN' | 'JOURNALIST';
 
 export interface User {
   id: string;
@@ -61,6 +61,9 @@ export interface Issue {
   location: Location;
   severity: IssueSeverity;
   status: IssueStatus;
+  upvotes: number;
+  isPetition: boolean;
+  hashtags?: string[];
   aiAnalysis?: AIAnalysis;
   departmentId?: string;
   assignedTo?: string; // User ID

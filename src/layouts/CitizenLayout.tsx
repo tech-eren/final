@@ -23,6 +23,8 @@ const citizenNavigation: SidebarItem[] = [
   { name: 'Profile', href: '/citizen/profile', icon: User },
 ];
 
+import { AISummarizerPanel } from '../components/ui/AISummarizerPanel';
+
 export function CitizenLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -45,6 +47,9 @@ export function CitizenLayout() {
             </div>
           </div>
         </main>
+        
+        {/* Right Sidebar - AI Summarizer */}
+        <AISummarizerPanel />
       </div>
 
       {/* Click outside to close mobile sidebar wrapper logic could go here, but omitted for brevity. */}

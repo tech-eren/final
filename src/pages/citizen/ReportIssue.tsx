@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { issueService } from '../../services/mock/issueService';
+import { aiService } from '../../services/aiService';
 import { useToast } from '../../context/ToastContext';
 
 
@@ -36,38 +37,54 @@ export function ReportIssue() {
     description: '',
     address: '',
     category: 'Other',
+    imageUrl: '',
   });
 
   const [position, setPosition] = useState<[number, number]>([24.8333, 92.7789]);
   const [imageUploaded, setImageUploaded] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSimulateAI = () => {
-    if (!imageUploaded) {
+  const handleSimulateAI = async () => {
+    if (!imageFile) {
       addToast({ title: 'Please upload an image first', type: 'warning' });
       return;
     }
     
     setIsAnalyzing(true);
-    // Simulate AI delay
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    try {
+      const result = await aiService.analyzeImage(imageFile);
+      
+      if (!result.hasIssue) {
+        addToast({ 
+          title: 'Analysis Failed', 
+          message: 'No civic issue detected in this image. Please upload a clear photo of the problem.',
+          type: 'error' 
+        });
+        return;
+      }
+
       setFormData(prev => ({
         ...prev,
-        title: 'Large Pothole Detected',
-        description: 'AI Analysis: Deep surface depression detected on asphalt road. Estimated hazard level: High.',
-        category: 'Road Damage'
+        title: result.title || '',
+        description: result.description || '',
+        category: result.category || 'Other'
       }));
+
       addToast({ 
         title: 'AI Analysis Complete', 
         message: 'Form automatically populated based on image contents.',
         type: 'success' 
       });
-    }, 1500);
+    } catch (error: any) {
+      addToast({ title: 'AI Analysis Error', message: error.message, type: 'error' });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,13 +132,30 @@ export function ReportIssue() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors relative
                 ${imageUploaded ? 'border-primary-500 bg-primary-50' : 'border-slate-300 hover:bg-slate-50'}`}
-              onClick={() => setImageUploaded(true)}
             >
+              <input 
+                type="file" 
+                accept="image/*"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImageFile(file);
+                    const imageUrl = URL.createObjectURL(file);
+                    setFormData(prev => ({ ...prev, imageUrl }));
+                    setImageUploaded(true);
+                  }
+                }}
+              />
               {imageUploaded ? (
                 <div className="flex flex-col items-center">
-                  <CheckCircle className="w-12 h-12 text-primary-500 mb-2" />
+                  {formData.imageUrl ? (
+                    <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded-md mb-2" />
+                  ) : (
+                    <CheckCircle className="w-12 h-12 text-primary-500 mb-2" />
+                  )}
                   <p className="text-sm font-medium text-primary-700">Image attached successfully</p>
                   <p className="text-xs text-primary-500 mt-1">Click to change</p>
                 </div>
