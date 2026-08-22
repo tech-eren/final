@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, MapPin, Sparkles, Upload, CheckCircle, FileText } from 'lucide-react';
+import { Camera, MapPin, Sparkles, Upload, CheckCircle, FileText, Crosshair } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -47,6 +47,27 @@ export function ReportIssue() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      addToast({ title: 'Geolocation is not supported by your browser', type: 'error' });
+      return;
+    }
+    
+    addToast({ title: 'Detecting location...', type: 'info' });
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setPosition([pos.coords.latitude, pos.coords.longitude]);
+        addToast({ title: 'Location detected successfully', type: 'success' });
+      },
+      (err) => {
+        console.error(err);
+        addToast({ title: 'Failed to detect location', message: 'Please allow location permissions.', type: 'error' });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   const handleSimulateAI = async () => {
@@ -251,9 +272,20 @@ export function ReportIssue() {
               onChange={handleInputChange}
             />
             <div className="pt-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Pinpoint exact location
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Pinpoint exact location
+                </label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDetectLocation}
+                  icon={Crosshair}
+                >
+                  Detect my location
+                </Button>
+              </div>
               <LocationPicker position={position} onChange={setPosition} />
             </div>
           </CardContent>
