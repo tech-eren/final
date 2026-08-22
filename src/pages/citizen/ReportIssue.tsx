@@ -133,7 +133,8 @@ export function ReportIssue() {
         title: formData.title,
         description: formData.description,
         category: formData.category as any,
-        location: { address: formData.address, latitude: position[0], longitude: position[1] }
+        location: { address: formData.address, latitude: position[0], longitude: position[1] },
+        imageUrl: formData.imageUrl
       });
       
       addToast({
