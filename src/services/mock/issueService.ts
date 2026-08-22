@@ -163,41 +163,66 @@ export const issueService = {
 
   getSystemAnalytics: async () => {
     await new Promise((resolve) => setTimeout(resolve, 600));
+
+    const totalReports = mockIssues.length;
+    const pendingReview = mockIssues.filter(i => i.status === 'Submitted').length;
+    const inProgress = mockIssues.filter(i => i.status === 'In Progress').length;
+    const resolved = mockIssues.filter(i => i.status === 'Resolved').length;
+
+    const resolutionRate = totalReports > 0 ? Number(((resolved / totalReports) * 100).toFixed(1)) : 0;
+
+    let avgResolutionTime = 0;
+    const resolvedIssues = mockIssues.filter(i => i.status === 'Resolved');
+    if (resolvedIssues.length > 0) {
+      const totalTimeMs = resolvedIssues.reduce((sum, issue) => {
+        return sum + (new Date(issue.updatedAt).getTime() - new Date(issue.createdAt).getTime());
+      }, 0);
+      avgResolutionTime = Number((totalTimeMs / resolvedIssues.length / (1000 * 60 * 60)).toFixed(1));
+    }
+
+    const issuesByCategory: Record<string, number> = {};
+    const issuesBySeverity: Record<string, number> = {
+      'Low': 0, 'Medium': 0, 'High': 0, 'Critical': 0
+    };
+
+    const reportsOverTime = [];
+    const now = Date.now();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now - i * 24 * 60 * 60 * 1000);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+      reportsOverTime.push({ date: dateStr, count: 0 });
+    }
+
+    mockIssues.forEach(issue => {
+      issuesByCategory[issue.category] = (issuesByCategory[issue.category] || 0) + 1;
+      
+      if (issuesBySeverity[issue.severity] !== undefined) {
+        issuesBySeverity[issue.severity]++;
+      } else {
+        issuesBySeverity[issue.severity] = 1;
+      }
+
+      const issueTime = new Date(issue.createdAt).getTime();
+      const diffDays = Math.floor((now - issueTime) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays >= 0 && diffDays < 7) {
+        const targetIndex = 6 - diffDays;
+        if (targetIndex >= 0 && targetIndex < 7) {
+          reportsOverTime[targetIndex].count++;
+        }
+      }
+    });
+
     return {
-      totalReports: 1245,
-      pendingReview: 142,
-      inProgress: 350,
-      resolved: 753,
-      resolutionRate: 60.5,
-      averageResolutionTimeHours: 48.2,
-      issuesByCategory: {
-        'Pothole': 350,
-        'Road Damage': 120,
-        'Garbage Accumulation': 240,
-        'Broken Streetlight': 180,
-        'Water Leakage': 95,
-        'Drainage Blockage': 110,
-        'Flooding': 45,
-        'Fallen Tree': 30,
-        'Traffic Signal': 55,
-        'Illegal Dumping': 20,
-        'Other': 0
-      },
-      issuesBySeverity: {
-        'Low': 450,
-        'Medium': 520,
-        'High': 200,
-        'Critical': 75
-      },
-      reportsOverTime: [
-        { date: 'Mon', count: 45 },
-        { date: 'Tue', count: 52 },
-        { date: 'Wed', count: 48 },
-        { date: 'Thu', count: 70 },
-        { date: 'Fri', count: 85 },
-        { date: 'Sat', count: 35 },
-        { date: 'Sun', count: 40 },
-      ]
+      totalReports,
+      pendingReview,
+      inProgress,
+      resolved,
+      resolutionRate,
+      averageResolutionTimeHours: avgResolutionTime,
+      issuesByCategory,
+      issuesBySeverity,
+      reportsOverTime
     };
   }
 };
