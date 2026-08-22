@@ -181,9 +181,13 @@ export function ReportIssue() {
                   const file = e.target.files?.[0];
                   if (file) {
                     setImageFile(file);
-                    const imageUrl = URL.createObjectURL(file);
-                    setFormData(prev => ({ ...prev, imageUrl }));
-                    setImageUploaded(true);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64Url = reader.result as string;
+                      setFormData(prev => ({ ...prev, imageUrl: base64Url }));
+                      setImageUploaded(true);
+                    };
+                    reader.readAsDataURL(file);
                   }
                 }}
               />
