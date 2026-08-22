@@ -10,6 +10,7 @@ export function IssueManagement() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -45,6 +46,20 @@ export function IssueManagement() {
       fetchIssues(); // Refresh the list
     } catch (error) {
       addToast({ title: 'Failed to update status', type: 'error' });
+    }
+  };
+
+  const handleResetStatus = async (issueId: string) => {
+    try {
+      await issueService.updateIssueStatus(issueId, 'Submitted');
+      addToast({ 
+        title: 'Status Reset', 
+        message: `Issue reset to Submitted`,
+        type: 'success' 
+      });
+      fetchIssues(); // Refresh the list
+    } catch (error) {
+      addToast({ title: 'Failed to reset status', type: 'error' });
     }
   };
 
@@ -171,9 +186,29 @@ export function IssueManagement() {
                             {issue.status === 'Submitted' ? 'Start Work' : 'Resolve'}
                           </Button>
                         )}
-                        <button className="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                            onClick={() => setOpenDropdownId(openDropdownId === issue.id ? null : issue.id)}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                          {openDropdownId === issue.id && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-slate-200">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    handleResetStatus(issue.id);
+                                    setOpenDropdownId(null);
+                                  }}
+                                  className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                >
+                                  Reset to Submitted
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
