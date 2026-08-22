@@ -1,7 +1,9 @@
 import type { Issue } from '../../types';
 
-// Mock data storage in memory
-let mockIssues: Issue[] = [
+const STORAGE_KEY = 'civic_resolve_mock_issues';
+
+// Default mock data
+const defaultIssues: Issue[] = [
   {
     id: 'iss_1',
     category: 'Road Damage',
@@ -61,6 +63,29 @@ let mockIssues: Issue[] = [
   },
 ];
 
+// Initialize from localStorage or use defaults
+const initializeIssues = (): Issue[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load issues from localStorage', e);
+  }
+  return defaultIssues;
+};
+
+let mockIssues: Issue[] = initializeIssues();
+
+const saveIssues = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockIssues));
+  } catch (e) {
+    console.error('Failed to save issues to localStorage', e);
+  }
+};
+
 export const issueService = {
   getIssuesByReporter: async (reporterId: string): Promise<Issue[]> => {
     // Simulate network delay
@@ -90,6 +115,7 @@ export const issueService = {
     };
 
     mockIssues = [newIssue, ...mockIssues];
+    saveIssues();
     return newIssue;
   },
   
@@ -125,6 +151,7 @@ export const issueService = {
     };
     
     mockIssues[issueIndex] = updatedIssue;
+    saveIssues();
     return updatedIssue;
   },
 
