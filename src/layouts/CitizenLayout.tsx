@@ -17,8 +17,7 @@ import { NotificationDropdown } from '../components/navigation/NotificationDropd
 
 const citizenNavigation: SidebarItem[] = [
   { name: 'Feed', href: '/citizen/feed', icon: LayoutList },
-  { name: 'Index', href: '/citizen/dashboard', icon: Home },
-  { name: 'Profile', href: '/citizen/profile', icon: User },
+  { name: 'Profile', href: '/citizen/dashboard', icon: User },
   { name: 'My Cases', href: '/citizen/reports', icon: FileText },
   { name: 'Report', href: '/citizen/report', icon: FileText },
   { name: 'Map', href: '/citizen/map', icon: MapIcon },
