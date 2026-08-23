@@ -13,20 +13,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    // 1. Scrape Live Data (Reddit JSON API is free and doesn't require auth)
-    // We target a specific city subreddit for civic issues
-    // Important: Reddit API requires a custom User-Agent header
-    const redditResponse = await fetch('https://www.reddit.com/r/mumbai/search.json?q=pothole OR traffic OR electricity OR water OR complaint&restrict_sr=1&sort=new&limit=15', {
-        headers: {
-            'User-Agent': 'UbiqLoupe-Civic-App/1.0.0 (Node.js)'
-        }
-    });
-    
+    // 1. Scrape Live Data
     let rawInternetData = "";
-
-    if (!redditResponse.ok) {
-        console.warn(`Reddit API failed: ${redditResponse.statusText}. Using fallback data for demo.`);
-        // Fallback data in case Reddit blocks the scraper (very common for hackathons)
+    
+    try {
+        const redditResponse = await fetch('https://www.reddit.com/r/mumbai/search.json?q=pothole OR traffic OR electricity OR water OR complaint&restrict_sr=1&sort=new&limit=15', {
+            headers: {
+                'User-Agent': 'UbiqLoupe-Civic-App/1.0.0 (Node.js)'
+            },
+            signal: AbortSignal.timeout(5000) // Don't hang forever
+        });
+        
+        if (!redditResponse.ok) {
+            throw new Error(`Reddit API blocked with status: ${redditResponse.status}`);
+        }
+        
+        const redditData = await redditResponse.json();
+        rawInternetData = redditData.data.children.map((child: any) => {
+            return `Source: Reddit (r/mumbai)\nTitle: ${child.data.title}\nText: ${child.data.selftext.substring(0, 300)}...\nURL: https://reddit.com${child.data.permalink}\nDate: ${new Date(child.data.created_utc * 1000).toISOString()}\n---\n`;
+        }).join('\n');
+        
+    } catch (fetchError) {
+        console.warn(`Live scrape failed (${fetchError}). Using fallback data for demo.`);
+        // Fallback data in case Reddit blocks the scraper or network fails (very common for hackathons)
         rawInternetData = `
 Source: Reddit (r/mumbai)
 Title: Huge pothole on Andheri Kurla Road
@@ -43,11 +52,6 @@ Title: Water pipe bursts in Bandra West
 Text: Residents report low water pressure and severe flooding on Hill Road after a main water line ruptured this morning.
 Date: 2026-08-23T09:30:00Z
         `;
-    } else {
-        const redditData = await redditResponse.json();
-        rawInternetData = redditData.data.children.map((child: any) => {
-            return `Source: Reddit (r/mumbai)\nTitle: ${child.data.title}\nText: ${child.data.selftext.substring(0, 300)}...\nURL: https://reddit.com${child.data.permalink}\nDate: ${new Date(child.data.created_utc * 1000).toISOString()}\n---\n`;
-        }).join('\n');
     }
 
     // 2. AI Analysis
