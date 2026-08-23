@@ -48,15 +48,6 @@ export function Sidebar({ items, isOpen = true }: SidebarProps) {
         ))}
       </nav>
       
-      <div className="mt-auto pt-8 border-t border-dark-border flex items-center gap-4">
-        <div className="w-11 h-11 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-zinc-400 text-lg shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 14h20"/><path d="M6.5 14v-2c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5v2"/><path d="M12 21v-4"/><path d="M12 2v2"/><path d="M4 14l-2 4h20l-2-4"/></svg>
-        </div>
-        <div>
-          <h4 className="m-0 text-white text-base font-semibold">Anonymous Citizen</h4>
-          <p className="m-0 text-zinc-500 text-sm">Incognito Mode</p>
-        </div>
-      </div>
     </aside>
   );
 }

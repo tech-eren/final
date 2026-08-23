@@ -7,25 +7,31 @@ import {
 } from 'recharts';
 import { Activity, Clock, CheckCircle, AlertOctagon } from 'lucide-react';
 import { issueService } from '../../services/mock/issueService';
-import type { AnalyticsData } from '../../types';
+import type { AnalyticsData, Issue } from '../../types';
+import { MapViewer } from '../../components/map/MapViewer';
 
 const COLORS = ['#0ea5e9', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6', '#ec4899', '#64748b'];
 const SEVERITY_COLORS = {
-  'Low': '#3b82f6',
-  'Medium': '#f59e0b',
-  'High': '#f97316',
-  'Critical': '#ef4444'
+  'low': '#3b82f6',
+  'medium': '#f59e0b',
+  'high': '#f97316',
+  'critical': '#ef4444'
 };
 
 export function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [unresolvedIssues, setUnresolvedIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const result = await issueService.getSystemAnalytics();
+        const [result, allIssues] = await Promise.all([
+          issueService.getSystemAnalytics(),
+          issueService.getAllIssues()
+        ]);
         setData(result);
+        setUnresolvedIssues(allIssues.filter(i => i.status !== 'Resolved'));
       } catch (error) {
         console.error('Failed to fetch analytics', error);
       } finally {
@@ -192,6 +198,15 @@ export function Analytics() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <h2 className="text-lg font-medium text-slate-900">Unresolved Issues Hotspot</h2>
+        </CardHeader>
+        <CardContent className="h-96 p-0 relative">
+          <MapViewer issues={unresolvedIssues} className="h-full w-full rounded-b-xl z-0" />
+        </CardContent>
+      </Card>
     </div>
   );
 }

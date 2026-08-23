@@ -63,7 +63,7 @@ export function Feed() {
 
     if (filter === 'global') return true;
     
-    // Nearby algorithm: within 15km radius (expanded slightly for better demo)
+    // Nearby algorithm: within 100km radius
     if (!userLocation) return true; // Show all while loading location
     const dist = getDistance(
       userLocation.lat, 
@@ -71,7 +71,7 @@ export function Feed() {
       issue.location.latitude, 
       issue.location.longitude
     );
-    return dist <= 15;
+    return dist <= 100;
   }).sort((a, b) => {
     // Dynamic upvotes sort taking user context into account
     const getNetUpvotes = (i: Issue) => {

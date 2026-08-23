@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { issueService } from '../../services/mock/issueService';
 import { useUser } from '../../context/UserContext';
-import { Heart, Search } from 'lucide-react';
+import { Heart, Search, CheckCircle2 } from 'lucide-react';
 import type { Issue } from '../../types';
 
 export function MyReports() {
@@ -147,6 +147,17 @@ export function MyReports() {
                    issue.status === 'In Progress' ? 'City crew assigned' : 
                    'Case closed'}
                 </p>
+
+                {issue.status === 'Resolved' && issue.resolutionPhotoUrl && (
+                  <div className="mt-4 pt-4 border-t border-dark-border">
+                    <h4 className="text-sm font-semibold text-green-400 mb-2 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" /> Resolution Proof
+                    </h4>
+                    <div className="rounded-lg overflow-hidden border border-green-500/30 w-full sm:w-64">
+                      <img src={issue.resolutionPhotoUrl} alt="Resolution Proof" className="w-full h-auto object-cover max-h-48" />
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

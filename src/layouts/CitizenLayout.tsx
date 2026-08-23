@@ -7,7 +7,8 @@ import {
   User,
   Bookmark,
   Settings,
-  Map as MapIcon
+  Map as MapIcon,
+  BrainCircuit
 } from 'lucide-react';
 import { Sidebar } from '../components/navigation/Sidebar';
 import type { SidebarItem } from '../components/navigation/Sidebar';
@@ -17,6 +18,7 @@ import { NotificationDropdown } from '../components/navigation/NotificationDropd
 
 const citizenNavigation: SidebarItem[] = [
   { name: 'Feed', href: '/citizen/feed', icon: LayoutList },
+  { name: 'Intelligence', href: '/citizen/intelligence', icon: BrainCircuit },
   { name: 'Profile', href: '/citizen/dashboard', icon: User },
   { name: 'My Cases', href: '/citizen/reports', icon: FileText },
   { name: 'Report', href: '/citizen/report', icon: FileText },

@@ -33,7 +33,7 @@ export type IssueStatus =
   | 'Resolved'
   | 'Rejected';
 
-export type IssueSeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface Location {
   latitude: number;
@@ -65,7 +65,9 @@ export interface Issue {
   isPetition: boolean;
   hashtags?: string[];
   aiAnalysis?: AIAnalysis;
+  department?: string;
   departmentId?: string;
+  resolutionPhotoUrl?: string;
   assignedTo?: string; // User ID
   reportedBy: string; // User ID
   createdAt: string;

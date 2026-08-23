@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   User, Bell, Shield, MapPin, Radio, Layout, 
-  Settings2, Eye, Type, Lock, Database, AlertTriangle 
+  Settings2, Eye, Type, Lock, Database, AlertTriangle, LogOut, Briefcase 
 } from 'lucide-react';
 
 import { Toast } from '../../components/settings/ui/Toast';
@@ -32,7 +32,9 @@ const SETTINGS_TABS = [
   { id: 'language', label: 'Language', category: 'PERSONALIZATION', icon: Type },
   { id: 'security', label: 'Security', category: 'SECURITY & DATA', icon: Lock },
   { id: 'data', label: 'Data & Privacy', category: 'SECURITY & DATA', icon: Database },
-  { id: 'danger', label: 'Danger Zone', category: 'DANGER ZONE', icon: AlertTriangle, isDanger: true }
+  { id: 'admin', label: 'Authority Dashboard', category: 'ADMIN', icon: Briefcase },
+  { id: 'danger', label: 'Danger Zone', category: 'DANGER ZONE', icon: AlertTriangle, isDanger: true },
+  { id: 'logout', label: 'Log Out', category: 'DANGER ZONE', icon: LogOut, isDanger: true }
 ];
 
 export function Settings() {
@@ -83,7 +85,18 @@ export function Settings() {
         <div className="lg:hidden block mb-4 flex-shrink-0">
           <select 
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value === 'logout') {
+                localStorage.clear();
+                window.location.href = '/login';
+                return;
+              }
+              if (e.target.value === 'admin') {
+                window.location.href = '/authority/dashboard';
+                return;
+              }
+              setActiveTab(e.target.value);
+            }}
             className="w-full bg-zinc-900 border border-zinc-700 text-white p-4 rounded-xl font-medium focus:outline-none focus:border-accent appearance-none cursor-pointer"
           >
             {Object.entries(groupedTabs).map(([category, tabs]) => (
@@ -110,7 +123,18 @@ export function Settings() {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => {
+                        if (tab.id === 'logout') {
+                          localStorage.clear();
+                          window.location.href = '/login';
+                          return;
+                        }
+                        if (tab.id === 'admin') {
+                          window.location.href = '/authority/dashboard';
+                          return;
+                        }
+                        setActiveTab(tab.id);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border-none
                         ${isActive 
                           ? 'bg-gradient-to-r from-accent/20 to-transparent text-white shadow-[inset_2px_0_0_0_#8B5CF6]' 

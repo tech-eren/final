@@ -2,17 +2,50 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { Issue } from '../../types';
 
-// Fix for default Leaflet icon paths in Vite
-const defaultIcon = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-L.Marker.prototype.options.icon = defaultIcon;
+// Custom animated heatmap icons based on status
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: 'bg-transparent border-none',
+    html: `
+      <div style="
+        background-color: ${color}66;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid ${color}AA;
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      ">
+        <div style="
+          background-color: ${color};
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 0 12px ${color}, 0 0 5px rgba(0,0,0,0.5);
+        "></div>
+      </div>
+      <style>
+        @keyframes pulse-ring {
+          0% { transform: scale(0.95); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+          100% { transform: scale(0.95); opacity: 1; }
+        }
+      </style>
+    `,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -24]
+  });
+};
+
+const icons = {
+  'Submitted': createCustomIcon('#ef4444'),   // Red
+  'In Progress': createCustomIcon('#eab308'), // Yellow
+  'Resolved': createCustomIcon('#22c55e')     // Green
+};
 
 // Default center: Silchar, India
 const DEFAULT_CENTER: [number, number] = [24.8333, 92.7789];
@@ -50,6 +83,7 @@ export function MapViewer({
           <Marker 
             key={issue.id} 
             position={[issue.location.latitude, issue.location.longitude]}
+            icon={icons[issue.status as keyof typeof icons] || icons['Submitted']}
           >
             <Popup>
               <div className="p-1 max-w-xs">

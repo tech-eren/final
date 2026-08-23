@@ -3,11 +3,13 @@ import { UploadCloud, MapPin, Sparkles, Loader2, Image as ImageIcon } from 'luci
 import { LocationPicker } from '../../components/map/LocationPicker';
 import { useToast } from '../../context/ToastContext';
 import { aiService } from '../../services/aiService';
+import { issueService } from '../../services/mock/issueService';
 
 export function ReportIssue() {
   const [location, setLocation] = useState<[number, number]>([24.83, 92.79]); // Default to Silchar, Assam
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [severity, setSeverity] = useState<'low' | 'medium' | 'high'>('medium');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   
@@ -48,6 +50,11 @@ export function ReportIssue() {
              setCategory('other');
           }
         }
+        if (result.severity) {
+          setSeverity(result.severity);
+        } else {
+          setSeverity('medium');
+        }
         addToast({ title: 'Success', message: 'Form auto-filled by AI.', type: 'success' });
       } else {
         addToast({ title: 'No Issue Detected', message: 'The AI could not identify a civic issue in the image.', type: 'warning' });
@@ -81,22 +88,39 @@ export function ReportIssue() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !category) {
       addToast({ title: 'Validation Error', message: 'Please fill in all required fields including category.', type: 'error' });
       return;
     }
-    // Handle form submission logic here
-    addToast({ title: 'Report Submitted', message: 'Your report has been successfully filed.', type: 'success' });
     
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setCategory('');
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setAddress('');
+    try {
+      await issueService.submitIssue({
+        title,
+        description,
+        category: category as any,
+        severity: severity as any,
+        imageUrl: previewUrl || '',
+        location: {
+          latitude: location[0],
+          longitude: location[1],
+          address: address || 'Unknown Location'
+        }
+      });
+      addToast({ title: 'Report Submitted', message: 'Your report has been successfully filed.', type: 'success' });
+      
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setCategory('');
+      setSeverity('medium');
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setAddress('');
+    } catch (error) {
+      addToast({ title: 'Error', message: 'Failed to submit report.', type: 'error' });
+    }
   };
 
   return (
@@ -160,7 +184,10 @@ export function ReportIssue() {
 
           {/* Issue Details */}
           <div>
-            <label className="block text-zinc-400 text-sm mb-2 mt-8 border-t border-dark-border pt-6">2. Issue Details</label>
+            <div className="flex items-center gap-2 mb-2 mt-8 border-t border-dark-border pt-6">
+              <label className="block text-zinc-400 text-sm m-0">2. Issue Details</label>
+              {title && description && <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded-full"><Sparkles className="w-3 h-3"/> AI Assisted</span>}
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-zinc-500 text-xs mb-1">Issue Title</label>
@@ -185,6 +212,19 @@ export function ReportIssue() {
                   <option value="safety" className="bg-dark-bg text-white">Safety</option>
                   <option value="noise" className="bg-dark-bg text-white">Noise Complaint</option>
                   <option value="other" className="bg-dark-bg text-white">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-500 text-xs mb-1">Severity</label>
+                <select 
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value as 'low' | 'medium' | 'high')}
+                  className="w-full bg-black/20 border border-dark-border text-white p-3 rounded-xl font-sans text-base focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(139,92,246,0.2)] transition-all appearance-none cursor-pointer"
+                >
+                  <option value="low" className="bg-dark-bg text-white">Low - Minor issue with limited impact</option>
+                  <option value="medium" className="bg-dark-bg text-white">Medium - Noticeable issue affecting usability</option>
+                  <option value="high" className="bg-dark-bg text-white">High - Potentially dangerous or urgent</option>
                 </select>
               </div>
 

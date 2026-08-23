@@ -24,7 +24,7 @@ export function AuthorityLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col h-screen bg-slate-50">
       <Navbar 
         onMenuClick={() => setSidebarOpen(true)} 
         showMenuButton={true} 
@@ -52,7 +52,7 @@ export function AuthorityLayout() {
       )}
 
       {/* AI Assistant */}
-      <FloatingAssistant />
+      <FloatingAssistant role="AUTHORITY" />
     </div>
   );
 }

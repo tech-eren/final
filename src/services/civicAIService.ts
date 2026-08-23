@@ -14,10 +14,76 @@ export interface CivicAIMessage {
 
 export const civicAIService = {
   // Simulates a backend AI request
-  sendMessage: async (query: string, userId: string = 'usr_1'): Promise<CivicAIMessage> => {
+  sendMessage: async (query: string, userId: string = 'usr_1', role: 'CITIZEN' | 'AUTHORITY' = 'CITIZEN'): Promise<CivicAIMessage> => {
     return new Promise((resolve) => {
       setTimeout(async () => {
         const q = query.toLowerCase();
+        
+        if (role === 'AUTHORITY') {
+          if (q.includes('summar') || q.includes('pending') || q.includes('status')) {
+            resolve({
+              id: `ai_${Date.now()}`,
+              role: 'assistant',
+              content: "Here is a quick summary of the current city infrastructure status:",
+              type: 'summary',
+              data: {
+                major: [
+                  "Road damage — 18 active reports",
+                  "Broken Streetlights — 12 active reports",
+                  "Sanitation — 9 active reports"
+                ],
+                critical: "There are currently 0 critical issues. 1 issue is In Progress.",
+                affectedArea: "Tarapur & Central Road"
+              },
+              timestamp: new Date()
+            });
+            return;
+          }
+
+          if (q.includes('hotspot') || q.includes('area')) {
+            resolve({
+              id: `ai_${Date.now()}`,
+              role: 'assistant',
+              content: "The primary hotspot for unresolved issues is the **Tarapur** sector, specifically along Central Road. Deploying Public Works to this area is recommended.",
+              type: 'text',
+              timestamp: new Date()
+            });
+            return;
+          }
+
+          if (q.includes('draft') || q.includes('email') || q.includes('update')) {
+             resolve({
+              id: `ai_${Date.now()}`,
+              role: 'assistant',
+              content: "**Draft Update for Public Works:**\n\nSubject: Urgent - Infrastructure Repairs Required in Tarapur Sector\n\nTeam,\nPlease prioritize the patching of potholes along Central Road (18 active reports) and inspect the streetlights on Park Road (12 active reports).",
+              type: 'text',
+              timestamp: new Date()
+            });
+            return;
+          }
+
+          if (q.includes('resolution') || q.includes('average') || q.includes('time')) {
+             resolve({
+              id: `ai_${Date.now()}`,
+              role: 'assistant',
+              content: "The average resolution time over the last 7 days is **24.5 hours**. This is a 12% improvement from last week.",
+              type: 'text',
+              timestamp: new Date()
+            });
+            return;
+          }
+
+          resolve({
+            id: `ai_${Date.now()}`,
+            role: 'assistant',
+            content: "I'm your authority assistant. You can ask me to summarize pending issues, identify hotspots, or draft updates for your departments.",
+            type: 'text',
+            timestamp: new Date()
+          });
+          return;
+        }
+
+        // --- CITIZEN LOGIC BELOW ---
         
         // 1. Report Intent
         if (q.includes('report') && (q.includes('help') || q.includes('pothole') || q.includes('issue') || q.includes('street'))) {
@@ -157,7 +223,25 @@ export const civicAIService = {
     });
   },
 
-  getWelcomeMessage: (): CivicAIMessage => {
+  getWelcomeMessage: (role: 'CITIZEN' | 'AUTHORITY' = 'CITIZEN'): CivicAIMessage => {
+    if (role === 'AUTHORITY') {
+      return {
+        id: `ai_welcome_auth`,
+        role: 'assistant',
+        content: "👋 Welcome back! I'm UbiqAI. I can help you triage infrastructure problems, analyze incident data, and assist in dispatching field workers efficiently.",
+        type: 'suggested_prompts',
+        data: {
+          prompts: [
+            "📊 Summarize critical pending issues",
+            "🗺️ Identify infrastructure hotspots",
+            "📝 Draft an update for Public Works",
+            "⏱️ What is our average resolution time?"
+          ]
+        },
+        timestamp: new Date()
+      };
+    }
+
     return {
       id: `ai_welcome`,
       role: 'assistant',

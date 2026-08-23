@@ -24,7 +24,7 @@ export function Dashboard() {
   }, []);
 
   const totalIssues = issues.length;
-  const criticalIssues = issues.filter(i => i.severity === 'Critical').length;
+  const criticalIssues = issues.filter(i => i.severity === 'critical').length;
   const inProgress = issues.filter(i => i.status === 'In Progress').length;
   const resolved = issues.filter(i => i.status === 'Resolved').length;
 
@@ -96,7 +96,7 @@ export function Dashboard() {
                 <span className="text-slate-500">Loading Map...</span>
               </div>
             ) : (
-              <MapViewer issues={issues.filter(i => i.status !== 'Resolved')} className="h-full w-full rounded-b-xl z-0" />
+              <MapViewer issues={issues} className="h-full w-full rounded-b-xl z-0" />
             )}
           </CardContent>
         </Card>
@@ -110,8 +110,8 @@ export function Dashboard() {
               {issues.slice(0, 5).map((issue) => (
                 <div key={issue.id} className="flex items-start space-x-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
                   <div className={`p-2 rounded-full flex-shrink-0
-                    ${issue.severity === 'Critical' ? 'bg-red-100 text-red-600' : 
-                      issue.severity === 'High' ? 'bg-orange-100 text-orange-600' : 
+                    ${issue.severity === 'critical' ? 'bg-red-100 text-red-600' : 
+                      issue.severity === 'high' ? 'bg-orange-100 text-orange-600' : 
                       'bg-slate-100 text-slate-600'}`}
                   >
                     <AlertTriangle className="w-4 h-4" />

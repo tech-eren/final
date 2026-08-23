@@ -1,6 +1,7 @@
 import type { Issue } from '../../types';
 
 const STORAGE_KEY = 'civic_resolve_mock_issues';
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_mock_insights';
 
 // Default mock data
 const defaultIssues: Issue[] = [
@@ -14,7 +15,7 @@ const defaultIssues: Issue[] = [
       latitude: 24.8333,
       longitude: 92.7789,
     },
-    severity: 'Medium',
+    severity: 'medium',
     status: 'Submitted',
     upvotes: 45,
     isPetition: false,
@@ -33,7 +34,7 @@ const defaultIssues: Issue[] = [
       latitude: 24.8350,
       longitude: 92.7800,
     },
-    severity: 'High',
+    severity: 'high',
     status: 'In Progress',
     upvotes: 152,
     isPetition: true,
@@ -52,7 +53,7 @@ const defaultIssues: Issue[] = [
       latitude: 24.8310,
       longitude: 92.7750,
     },
-    severity: 'Low',
+    severity: 'low',
     status: 'Resolved',
     upvotes: 12,
     isPetition: false,
@@ -86,6 +87,58 @@ const saveIssues = () => {
   }
 };
 
+const defaultInsights: any[] = [
+  {
+    id: 'ins_1',
+    type: 'anomaly',
+    title: 'Spike in Road Damage Reports',
+    description: 'A 24% increase in pothole reports detected along the 4th Avenue corridor over the last 48 hours.',
+    severity: 'high',
+    actionSuggested: 'Deploy emergency patch crew to 4th Avenue.',
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: 'ins_2',
+    type: 'cluster',
+    title: 'Streetlight Outage Cluster',
+    description: '3 independent reports of broken streetlights in the Downtown zone suggest a systemic grid issue rather than isolated bulb failures.',
+    severity: 'medium',
+    actionSuggested: 'Dispatch electrical team to inspect Downtown sector substation.',
+    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 'ins_3',
+    type: 'prediction',
+    title: 'Flood Risk: Centennial Park',
+    description: 'Based on weather forecasts and historical drainage failure data, there is an 85% probability of localized flooding near Centennial Park this weekend.',
+    severity: 'critical',
+    actionSuggested: 'Preemptively clear storm drains in Sector 7.',
+    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+  }
+];
+
+const initializeInsights = (): any[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_INSIGHTS);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load insights from localStorage', e);
+  }
+  return defaultInsights;
+};
+
+let mockInsights: any[] = initializeInsights();
+
+const saveInsights = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY_INSIGHTS, JSON.stringify(mockInsights));
+  } catch (e) {
+    console.error('Failed to save insights to localStorage', e);
+  }
+};
+
 export const issueService = {
   getAllIssues: async (): Promise<Issue[]> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -111,7 +164,7 @@ export const issueService = {
       description: data.description || '',
       imageUrl: data.imageUrl || '',
       location: data.location || { address: 'Unknown', latitude: 0, longitude: 0 },
-      severity: data.severity || 'Low',
+      severity: data.severity || 'low',
       status: 'Submitted',
       upvotes: 0,
       isPetition: false,
@@ -146,6 +199,22 @@ export const issueService = {
     );
   },
 
+  updateIssue: async (issueId: string, updates: Partial<Issue>): Promise<Issue> => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const issueIndex = mockIssues.findIndex(i => i.id === issueId);
+    if (issueIndex === -1) throw new Error('Issue not found');
+    
+    const updatedIssue = { 
+      ...mockIssues[issueIndex], 
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockIssues[issueIndex] = updatedIssue;
+    saveIssues();
+    return updatedIssue;
+  },
+
   updateIssueStatus: async (issueId: string, newStatus: string): Promise<Issue> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const issueIndex = mockIssues.findIndex(i => i.id === issueId);
@@ -164,36 +233,17 @@ export const issueService = {
 
   getCivicInsights: async (): Promise<any[]> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    return [
-      {
-        id: 'ins_1',
-        type: 'anomaly',
-        title: 'Spike in Road Damage Reports',
-        description: 'A 24% increase in pothole reports detected along the 4th Avenue corridor over the last 48 hours.',
-        severity: 'High',
-        actionSuggested: 'Deploy emergency patch crew to 4th Avenue.',
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: 'ins_2',
-        type: 'cluster',
-        title: 'Streetlight Outage Cluster',
-        description: '3 independent reports of broken streetlights in the Downtown zone suggest a systemic grid issue rather than isolated bulb failures.',
-        severity: 'Medium',
-        actionSuggested: 'Dispatch electrical team to inspect Downtown sector substation.',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: 'ins_3',
-        type: 'prediction',
-        title: 'Flood Risk: Centennial Park',
-        description: 'Based on weather forecasts and historical drainage failure data, there is an 85% probability of localized flooding near Centennial Park this weekend.',
-        severity: 'Critical',
-        actionSuggested: 'Preemptively clear storm drains in Sector 7.',
-        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
-      }
-    ];
+    return [...mockInsights].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   },
+
+  addCivicInsights: async (newInsights: any[]): Promise<any[]> => {
+    mockInsights = [...newInsights, ...mockInsights];
+    saveInsights();
+    return mockInsights;
+  },
+
 
   getSystemAnalytics: async () => {
     await new Promise((resolve) => setTimeout(resolve, 600));
@@ -216,7 +266,7 @@ export const issueService = {
 
     const issuesByCategory: Record<string, number> = {};
     const issuesBySeverity: Record<string, number> = {
-      'Low': 0, 'Medium': 0, 'High': 0, 'Critical': 0
+      'low': 0, 'medium': 0, 'high': 0, 'critical': 0
     };
 
     const reportsOverTime: { date: string; count: number }[] = [];

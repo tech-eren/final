@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { civicAIService } from '../../services/civicAIService';
 import type { CivicAIMessage } from '../../services/civicAIService';
 
-export function ChatInterface({ onAction }: { onAction?: () => void }) {
+export function ChatInterface({ onAction, role = 'CITIZEN' }: { onAction?: () => void, role?: 'CITIZEN' | 'AUTHORITY' }) {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<CivicAIMessage[]>([civicAIService.getWelcomeMessage()]);
+  const [messages, setMessages] = useState<CivicAIMessage[]>([civicAIService.getWelcomeMessage(role)]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,7 @@ export function ChatInterface({ onAction }: { onAction?: () => void }) {
     setIsTyping(true);
 
     try {
-      const aiResponse = await civicAIService.sendMessage(trimmed);
+      const aiResponse = await civicAIService.sendMessage(trimmed, 'usr_1', role);
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       setMessages(prev => [...prev, {

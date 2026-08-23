@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
-import { AlertTriangle, TrendingUp, Group, BrainCircuit, CalendarClock } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Group, BrainCircuit, CalendarClock, RefreshCw } from 'lucide-react';
 import { issueService } from '../../services/mock/issueService';
 import type { CivicInsight } from '../../types';
 
 export function Intelligence() {
   const [insights, setInsights] = useState<CivicInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -22,6 +23,32 @@ export function Intelligence() {
     fetchInsights();
   }, []);
 
+  const handleScanLiveSources = async () => {
+    setIsScanning(true);
+    try {
+      // 1. Hit our new API route to fetch and process real internet data
+      const response = await fetch('/api/analyze-live-intel');
+      
+      if (!response.ok) {
+        throw new Error('Failed to scan live sources');
+      }
+
+      const newInsights = await response.json();
+      
+      // 2. Client-side handoff: Save the new data into our mock DB (localStorage)
+      if (newInsights && newInsights.length > 0) {
+          const updatedInsights = await issueService.addCivicInsights(newInsights);
+          // 3. Update the UI
+          setInsights(updatedInsights);
+      }
+    } catch (error) {
+      console.error('Error scanning live sources:', error);
+      alert('Failed to scan live sources. Please try again.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const getIconForType = (type: string) => {
     switch (type) {
       case 'anomaly': return <TrendingUp className="w-5 h-5" />;
@@ -33,9 +60,9 @@ export function Intelligence() {
 
   const getColorForSeverity = (severity: string) => {
     switch (severity) {
-      case 'Critical': return 'bg-red-100 text-red-700 border-red-200';
-      case 'High': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'critical': return 'bg-red-100 text-red-700 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       default: return 'bg-blue-100 text-blue-700 border-blue-200';
     }
   };
@@ -43,13 +70,27 @@ export function Intelligence() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center">
-          <BrainCircuit className="w-6 h-6 mr-2 text-primary-600" />
-          Civic Intelligence Feed
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          AI-generated insights, anomaly detection, and predictive risk assessments based on incoming civic data.
-        </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center">
+                <BrainCircuit className="w-6 h-6 mr-2 text-primary-600" />
+                Civic Intelligence Feed
+                </h1>
+                <p className="text-sm text-slate-500 mt-1">
+                AI-generated insights, anomaly detection, and predictive risk assessments based on incoming civic data.
+                </p>
+            </div>
+            
+            <button 
+                onClick={handleScanLiveSources}
+                disabled={isScanning || isLoading}
+                className={`mt-4 md:mt-0 flex items-center px-4 py-2 rounded-md text-white font-medium shadow-sm transition-all
+                    ${isScanning || isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 hover:shadow-md'}`}
+            >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isScanning ? 'animate-spin' : ''}`} />
+                {isScanning ? 'Scanning Live Sources...' : 'Run Live Internet Sweep'}
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -64,8 +105,8 @@ export function Intelligence() {
         ) : (
           insights.map((insight) => (
             <Card key={insight.id} className={`border-l-4 ${
-              insight.severity === 'Critical' ? 'border-l-red-500' :
-              insight.severity === 'High' ? 'border-l-orange-500' :
+              insight.severity === 'critical' ? 'border-l-red-500' :
+              insight.severity === 'high' ? 'border-l-orange-500' :
               'border-l-yellow-500'
             }`}>
               <CardHeader className="pb-3 bg-white border-b border-slate-50 flex flex-row items-center justify-between">

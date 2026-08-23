@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bot, X, MessageSquarePlus, Minus } from 'lucide-react';
 import { ChatInterface } from './ChatInterface';
 
-export function FloatingAssistant() {
+export function FloatingAssistant({ role = 'CITIZEN' }: { role?: 'CITIZEN' | 'AUTHORITY' }) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Handle escape key to close
@@ -70,7 +70,7 @@ export function FloatingAssistant() {
           
           {/* Content */}
           <div className="flex-1 overflow-hidden relative">
-            <ChatInterface onAction={() => {}} />
+            <ChatInterface onAction={() => {}} role={role} />
           </div>
         </div>
       )}
