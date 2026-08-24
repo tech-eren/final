@@ -1,7 +1,7 @@
 import { liveIntelService } from './liveIntelService';
 import { issueService } from './mock/issueService';
 
-const THROTTLE_KEY = 'civic_resolve_last_auto_scrape_v4';
+const THROTTLE_KEY = 'civic_resolve_last_auto_scrape_v5';
 const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
 const DEFAULT_LOCATION = {

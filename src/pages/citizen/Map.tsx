@@ -71,10 +71,19 @@ export function Map() {
     fetchIssues();
   }, []);
 
-  // Default center (Silchar, Assam - based on mock data)
-  const defaultCenter: [number, number] = [24.8333, 92.7789];
+  const [userLocation, setUserLocation] = useState<[number, number]>([24.8333, 92.7789]); // Silchar fallback
+
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+        () => console.warn("Location denied, using default for map.")
+      );
+    }
+  }, []);
 
   const displayedIssues = issues.filter(issue => {
+    if (issue.location.latitude === 0 || issue.location.longitude === 0) return false;
     if (filter === 'All') return true;
     return issue.status === 'Submitted' || issue.status === 'In Progress';
   });
@@ -120,7 +129,8 @@ export function Map() {
         ) : null}
         
         <MapContainer 
-          center={defaultCenter} 
+          key={`${userLocation[0]}-${userLocation[1]}`} // Force re-render when location resolves
+          center={userLocation} 
           zoom={13} 
           className="w-full h-full z-10"
         >

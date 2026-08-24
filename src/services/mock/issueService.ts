@@ -1,7 +1,7 @@
 import type { Issue } from '../../types';
 
-const STORAGE_KEY = 'civic_resolve_issues_v7';
-const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v7';
+const STORAGE_KEY = 'civic_resolve_issues_v8';
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v8';
 
 // No seed data — Feed is populated only by real user reports and AI-scraped posts
 const defaultIssues: Issue[] = [];
@@ -264,8 +264,8 @@ export const issueService = {
         description: `[AI Detected Insight] ${insight.title}\n\n${insight.description}`,
         location: {
           address: [insight.city, insight.district, insight.state].filter(Boolean).join(', ') || 'Location Unknown',
-          latitude: typeof insight.latitude === 'number' ? insight.latitude : 0,
-          longitude: typeof insight.longitude === 'number' ? insight.longitude : 0,
+          latitude: typeof insight.latitude === 'number' && insight.latitude !== 0 ? insight.latitude : (insight.scope === 'local' ? baseLat + jitterLat : 0),
+          longitude: typeof insight.longitude === 'number' && insight.longitude !== 0 ? insight.longitude : (insight.scope === 'local' ? baseLng + jitterLng : 0),
           city: insight.city,
           district: insight.district,
           state: insight.state,
