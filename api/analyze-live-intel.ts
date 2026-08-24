@@ -13,43 +13,97 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    // 1. Scrape Live Data
+    // 1. Scrape Reddit
     let rawInternetData = "";
     
     try {
-        const redditResponse = await fetch('https://www.reddit.com/r/mumbai/search.json?q=pothole OR traffic OR electricity OR water OR complaint&restrict_sr=1&sort=new&limit=15', {
+        const location = req.query.location || (req.body && req.body.location) || 'Silchar';
+        // Using a general Reddit search for the location instead of a specific subreddit since smaller cities might not have active subreddits
+        const redditResponse = await fetch(`https://www.reddit.com/search.json?q=${encodeURIComponent(location)} AND (pothole OR traffic OR electricity OR water OR complaint)&sort=new&limit=15`, {
             headers: {
                 'User-Agent': 'UbiqLoupe-Civic-App/1.0.0 (Node.js)'
             },
-            signal: AbortSignal.timeout(5000) // Don't hang forever
+            signal: AbortSignal.timeout(5000)
         });
         
-        if (!redditResponse.ok) {
-            throw new Error(`Reddit API blocked with status: ${redditResponse.status}`);
+        if (redditResponse.ok) {
+            const redditData = await redditResponse.json();
+            rawInternetData += redditData.data.children.map((child: any) => {
+                return `Source: Reddit\nTitle: ${child.data.title}\nText: ${child.data.selftext.substring(0, 300)}...\nURL: https://reddit.com${child.data.permalink}\nDate: ${new Date(child.data.created_utc * 1000).toISOString()}\n---\n`;
+            }).join('\n');
         }
-        
-        const redditData = await redditResponse.json();
-        rawInternetData = redditData.data.children.map((child: any) => {
-            return `Source: Reddit (r/mumbai)\nTitle: ${child.data.title}\nText: ${child.data.selftext.substring(0, 300)}...\nURL: https://reddit.com${child.data.permalink}\nDate: ${new Date(child.data.created_utc * 1000).toISOString()}\n---\n`;
-        }).join('\n');
-        
     } catch (fetchError) {
-        console.warn(`Live scrape failed (${fetchError}). Using fallback data for demo.`);
-        // Fallback data in case Reddit blocks the scraper or network fails (very common for hackathons)
+        console.warn(`Reddit scrape failed: ${fetchError}`);
+    }
+
+    // 2. Scrape Twitter (X) via RapidAPI
+    try {
+        const rapidApiKey = process.env.RAPIDAPI_TWITTER_KEY;
+        if (rapidApiKey) {
+            const location = req.query.location || (req.body && req.body.location) || 'Silchar';
+            const query = encodeURIComponent(`${location} traffic OR ${location} pothole OR ${location} water`);
+            const twitterResponse = await fetch(`https://x-twitter-api1.p.rapidapi.com/searchtype?query=${query}`, {
+                headers: {
+                    'x-rapidapi-key': rapidApiKey,
+                    'x-rapidapi-host': 'x-twitter-api1.p.rapidapi.com'
+                },
+                signal: AbortSignal.timeout(8000)
+            });
+            
+            if (twitterResponse.ok) {
+                const twitterData = await twitterResponse.json();
+                // Pass raw stringified JSON directly since Gemini is good at parsing raw dumps.
+                // Substring it to avoid huge token usage if the response is massive.
+                rawInternetData += `Source: X (Twitter)\nRaw JSON Data:\n${JSON.stringify(twitterData).substring(0, 4000)}\n---\n`;
+            } else {
+                console.warn(`Twitter API returned status ${twitterResponse.status}`);
+            }
+        }
+    } catch (err) {
+        console.warn(`Twitter scrape failed: ${err}`);
+    }
+
+    // 3. Scrape Local News via NewsAPI
+    try {
+        const newsApiKey = process.env.NEWS_API_KEY;
+        if (newsApiKey) {
+            const location = req.query.location || (req.body && req.body.location) || 'Silchar';
+            const newsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)} AND (infrastructure OR traffic OR water OR pothole)&language=en&sortBy=publishedAt&pageSize=5&apiKey=${newsApiKey}`;
+            const newsResponse = await fetch(newsUrl, { signal: AbortSignal.timeout(5000) });
+            
+            if (newsResponse.ok) {
+                const newsData = await newsResponse.json();
+                if (newsData.articles && newsData.articles.length > 0) {
+                    rawInternetData += newsData.articles.map((article: any) => {
+                        return `Source: News (${article.source.name})\nTitle: ${article.title}\nText: ${article.description?.substring(0, 300) || ''}...\nURL: ${article.url}\nDate: ${article.publishedAt}\n---\n`;
+                    }).join('');
+                }
+            } else {
+                console.warn(`NewsAPI returned status ${newsResponse.status}`);
+            }
+        }
+    } catch (err) {
+        console.warn(`NewsAPI scrape failed: ${err}`);
+    }
+
+    // 4. Fallback if both fail or return empty
+    if (rawInternetData.trim().length === 0) {
+        console.warn(`All live scrapes failed or returned empty. Using fallback data for demo.`);
+        const location = req.query.location || (req.body && req.body.location) || 'Silchar';
         rawInternetData = `
-Source: Reddit (r/mumbai)
-Title: Huge pothole on Andheri Kurla Road
-Text: Bro I just popped my front left tire on this massive crater near the metro station. Avoid at all costs.
+Source: Reddit (r/assam)
+Title: Huge pothole near NIT ${location}
+Text: Bro I just popped my front left tire on this massive crater near the campus. Avoid at all costs.
 Date: 2026-08-23T10:00:00Z
 ---
-Source: Twitter (@mumbaitraffic)
-Title: Traffic signal dead at JVLR junction
-Text: The signals are completely off at JVLR intersection. Total chaos. Need traffic police ASAP!
+Source: Twitter (@${location}traffic)
+Title: Traffic signal dead at Capital Point junction
+Text: The signals are completely off at Capital Point intersection in ${location}. Total chaos. Need traffic police ASAP!
 Date: 2026-08-23T11:15:00Z
 ---
-Source: Local News (Mumbai Mirror)
-Title: Water pipe bursts in Bandra West
-Text: Residents report low water pressure and severe flooding on Hill Road after a main water line ruptured this morning.
+Source: Local News (${location} Chronicle)
+Title: Water pipe bursts in Tarapur
+Text: Residents report low water pressure and severe flooding on Tarapur Road after a main water line ruptured this morning in ${location}.
 Date: 2026-08-23T09:30:00Z
         `;
     }
@@ -62,11 +116,12 @@ Date: 2026-08-23T09:30:00Z
       input: [
         {
           type: 'text',
-          text: `You are a Civic Intelligence AI. Analyze the following raw data scraped from the internet (social media, news, etc.).
-          Identify potential civic issues, infrastructure problems, or emergencies. 
+          text: `You are a Civic Intelligence AI for the city of ${location}. Analyze the following raw data scraped from the internet (social media, news, etc.).
+          Identify potential civic issues, infrastructure problems, or emergencies SPECIFICALLY for ${location} or surrounding areas. 
+          Ignore any news or posts about other cities.
           Group related posts into single "Insights".
           Generate exactly 2 to 4 high-quality CivicInsight objects based on the data.
-          If the data is completely irrelevant, generate some plausible mock insights based on typical city issues.
+          If the data is completely irrelevant or from other cities, ignore it and instead generate some plausible mock insights based on typical civic issues in ${location}.
           
           Raw Internet Data:
           ${rawInternetData}

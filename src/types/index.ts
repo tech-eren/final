@@ -35,6 +35,8 @@ export type IssueStatus =
 
 export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical';
 
+export type IssueSourcePlatform = 'reddit' | 'x' | 'news_site' | 'municipal_portal' | 'user_report' | 'ai_bot';
+
 export interface Location {
   latitude: number;
   longitude: number;
@@ -70,6 +72,15 @@ export interface Issue {
   resolutionPhotoUrl?: string;
   assignedTo?: string; // User ID
   reportedBy: string; // User ID
+  
+  // Feed enhancements
+  sourcePlatform?: IssueSourcePlatform;
+  sourceUrl?: string;
+  sourceAuthor?: string;
+  engagementOrigin?: { upvotes?: number; comments?: number; shares?: number };
+  engagementApp?: { likes: number; dislikes: number; saves: number };
+  trendingScore?: number;
+
   createdAt: string;
   updatedAt: string;
 }

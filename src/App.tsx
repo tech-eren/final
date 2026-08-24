@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ToastProvider } from './context/ToastContext';
 import { ModalProvider } from './context/ModalContext';
 import { UserProvider } from './context/UserContext';
@@ -6,6 +7,7 @@ import { RootLayout } from './layouts/RootLayout';
 import { CitizenLayout } from './layouts/CitizenLayout';
 import { AuthorityLayout } from './layouts/AuthorityLayout';
 import { AdminLayout } from './layouts/AdminLayout';
+import { runAutoScrape } from './services/autoScrapeService';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -42,6 +44,11 @@ function Placeholder({ title }: { title: string }) {
 }
 
 function App() {
+  useEffect(() => {
+    // Silently scrape the web for nearby civic issues and auto-post them to the Feed
+    runAutoScrape();
+  }, []);
+
   return (
     <UserProvider>
       <ToastProvider>

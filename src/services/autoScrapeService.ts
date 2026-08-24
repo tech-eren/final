@@ -1,0 +1,75 @@
+import { liveIntelService } from './liveIntelService';
+import { issueService } from './mock/issueService';
+
+const THROTTLE_KEY = 'civic_resolve_last_auto_scrape';
+const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
+
+function getUserLocation(): Promise<{ lat: number; lng: number }> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) {
+      resolve({ lat: 24.8333, lng: 92.7789 });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve({ lat: 24.8333, lng: 92.7789 }),
+      { timeout: 6000 }
+    );
+  });
+}
+
+function shouldScrape(): boolean {
+  try {
+    const last = localStorage.getItem(THROTTLE_KEY);
+    if (!last) return true;
+    return Date.now() - parseInt(last, 10) > THROTTLE_MS;
+  } catch {
+    return true;
+  }
+}
+
+function markScraped() {
+  try {
+    localStorage.setItem(THROTTLE_KEY, Date.now().toString());
+  } catch { /* ignore */ }
+}
+
+export function getLastScrapeTime(): Date | null {
+  try {
+    const last = localStorage.getItem(THROTTLE_KEY);
+    return last ? new Date(parseInt(last, 10)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function runAutoScrape(): Promise<void> {
+  if (!shouldScrape()) {
+    console.log('[AutoScrape] Throttled — last ran < 30 min ago. Skipping.');
+    return;
+  }
+
+  console.log('[AutoScrape] Starting background web scrape...');
+
+  try {
+    issueService.clearStaleAiIssues();
+
+    const { lat, lng } = await getUserLocation();
+    console.log(`[AutoScrape] Location resolved: (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+
+    const insights = await liveIntelService.analyzeLiveIntel(lat, lng);
+
+    if (insights && insights.length > 0) {
+      await issueService.addCivicInsights(insights, lat, lng);
+      console.log(`[AutoScrape] Posted ${insights.length} AI-detected issues to the Feed.`);
+      // Notify any listening components (e.g. Feed) that new posts are ready
+      window.dispatchEvent(new CustomEvent('ai-posts-ready'));
+    } else {
+      console.log('[AutoScrape] No insights returned from live scrape.');
+    }
+
+    markScraped();
+  } catch (err) {
+    console.warn('[AutoScrape] Failed silently:', err);
+  }
+}

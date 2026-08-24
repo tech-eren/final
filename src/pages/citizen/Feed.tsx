@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, ThumbsDown, Bookmark, MapPin, Globe, Search } from 'lucide-react';
+import { Heart, ThumbsDown, Bookmark, MapPin, Globe, Search, User, MessageCircle, Landmark, TrendingUp, Clock, Hash, ExternalLink } from 'lucide-react';
 import { issueService } from '../../services/mock/issueService';
 import { useUser } from '../../context/UserContext';
 import type { Issue } from '../../types';
@@ -18,7 +18,9 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
 
 export function Feed() {
   const { user, toggleLike, toggleDislike, toggleSave } = useUser();
-  const [filter, setFilter] = useState<'nearby' | 'global'>('nearby');
+  const [tab, setTab] = useState<'reported' | 'trending'>('reported');
+  const [scope, setScope] = useState<'nearby' | 'city' | 'state' | 'global'>('nearby');
+  const [appliedScopeInfo, setAppliedScopeInfo] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,12 +38,29 @@ export function Feed() {
     } else {
       setUserLocation({ lat: 24.8333, lng: 92.7789 });
     }
+  }, []);
 
+  useEffect(() => {
+    if (!userLocation && scope !== 'global') return;
+    
     const fetchIssues = async () => {
       setLoading(true);
+      setAppliedScopeInfo(null);
       try {
-        const data = await issueService.getAllIssues();
+        const { issues: data, scopeApplied } = await issueService.getFeedIssues(
+          tab === 'reported' ? 'recent' : 'trending',
+          scope,
+          userLocation?.lat,
+          userLocation?.lng
+        );
         setIssues(data);
+        
+        if (scopeApplied.startsWith('nearby_') && scopeApplied !== 'nearby_5km') {
+          const radius = scopeApplied.split('_')[1];
+          setAppliedScopeInfo(`Showing results within ${radius}`);
+        } else if (scopeApplied === 'city' && scope === 'nearby') {
+          setAppliedScopeInfo('Showing city-wide results');
+        }
       } catch (e) {
         console.error("Failed to load feed", e);
       } finally {
@@ -49,7 +68,12 @@ export function Feed() {
       }
     };
     fetchIssues();
-  }, []);
+
+    // Auto-refresh when the background AI scraper finishes posting new issues
+    const handleAiPostsReady = () => { fetchIssues(); };
+    window.addEventListener('ai-posts-ready', handleAiPostsReady);
+    return () => window.removeEventListener('ai-posts-ready', handleAiPostsReady);
+  }, [tab, scope, userLocation]);
 
   const displayedIssues = issues.filter(issue => {
     if (searchQuery.trim()) {
@@ -60,27 +84,7 @@ export function Feed() {
         (issue.hashtags && issue.hashtags.some(tag => tag.toLowerCase().includes(q)));
       if (!matches) return false;
     }
-
-    if (filter === 'global') return true;
-    
-    // Nearby algorithm: within 100km radius
-    if (!userLocation) return true; // Show all while loading location
-    const dist = getDistance(
-      userLocation.lat, 
-      userLocation.lng, 
-      issue.location.latitude, 
-      issue.location.longitude
-    );
-    return dist <= 100;
-  }).sort((a, b) => {
-    // Dynamic upvotes sort taking user context into account
-    const getNetUpvotes = (i: Issue) => {
-      let net = i.upvotes;
-      if (user.likedIssues.includes(i.id)) net += 1;
-      if (user.dislikedIssues.includes(i.id)) net -= 1;
-      return net;
-    };
-    return getNetUpvotes(b) - getNetUpvotes(a);
+    return true;
   });
 
   return (
@@ -93,28 +97,48 @@ export function Feed() {
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        {/* Tabs */}
-        <div className="flex gap-4 bg-black/20 p-2 rounded-2xl w-max border border-dark-border">
-          <button 
-            onClick={() => setFilter('nearby')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
-              filter === 'nearby' 
-                ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <MapPin className="w-4 h-4" /> Nearby
-          </button>
-          <button 
-            onClick={() => setFilter('global')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
-              filter === 'global' 
-                ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Globe className="w-4 h-4" /> Global
-          </button>
+        {/* Tabs & Scope Selector */}
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex gap-2 bg-black/20 p-2 rounded-2xl w-max border border-dark-border">
+            <button 
+              onClick={() => setTab('reported')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+                tab === 'reported' 
+                  ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Clock className="w-4 h-4" /> Reported
+            </button>
+            <button 
+              onClick={() => setTab('trending')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+                tab === 'trending' 
+                  ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" /> Trending
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <select 
+                value={scope}
+                onChange={(e) => setScope(e.target.value as any)}
+                className="bg-black/20 border border-dark-border text-white px-4 py-3 rounded-xl font-medium focus:outline-none focus:border-accent appearance-none cursor-pointer"
+              >
+                <option value="nearby">Nearby</option>
+                <option value="city">City-wide</option>
+                <option value="state">State</option>
+                <option value="global">Global</option>
+             </select>
+             {appliedScopeInfo && (
+               <span className="text-xs text-zinc-400 bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-zinc-700/50 whitespace-nowrap">
+                 {appliedScopeInfo}
+               </span>
+             )}
+          </div>
         </div>
 
         {/* Search */}
@@ -139,8 +163,11 @@ export function Feed() {
       ) : (
         <div className="space-y-6">
           {displayedIssues.length === 0 ? (
-            <div className="bg-dark-card border border-dark-border rounded-2xl p-10 text-center backdrop-blur-md">
-              <p className="text-zinc-400 text-lg m-0">No cases found in this area.</p>
+            <div className="bg-dark-card border border-dark-border rounded-2xl p-12 text-center backdrop-blur-md">
+              <div className="text-5xl mb-4">🤖</div>
+              <h3 className="text-white font-semibold text-xl mb-2">No issues yet in this area</h3>
+              <p className="text-zinc-400 mb-1">The AI is scanning nearby sources — check back in a moment.</p>
+              <p className="text-zinc-500 text-sm">You can also <a href="/citizen/report" className="text-accent underline underline-offset-2">report an issue</a> you've spotted directly.</p>
             </div>
           ) : (
             displayedIssues.map((issue, index) => {
@@ -159,6 +186,36 @@ export function Feed() {
                   className="bg-dark-card border border-dark-border rounded-2xl p-6 backdrop-blur-md transition-all duration-300 animate-fade-in hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:-translate-y-1" 
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
+                  {/* Source Badge */}
+                  <div className="mb-4 flex items-center gap-3">
+                    {issue.sourcePlatform === 'ai_bot' ? (
+                      <div className="flex items-center gap-1.5 bg-violet-500/10 text-violet-300 px-2.5 py-1 rounded-full text-xs font-semibold border border-violet-500/30">
+                        🤖 AI Detected
+                      </div>
+                    ) : issue.sourcePlatform === 'reddit' ? (
+                      <div className="flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-full text-xs font-medium border border-orange-500/20">
+                        <MessageCircle className="w-3 h-3" /> Reddit {issue.sourceAuthor && `• ${issue.sourceAuthor}`}
+                      </div>
+                    ) : issue.sourcePlatform === 'x' ? (
+                      <div className="flex items-center gap-1.5 bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-full text-xs font-medium border border-zinc-700">
+                        <Hash className="w-3 h-3" /> X {issue.sourceAuthor && `• ${issue.sourceAuthor}`}
+                      </div>
+                    ) : issue.sourcePlatform === 'news_site' || issue.sourcePlatform === 'municipal_portal' ? (
+                      <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full text-xs font-medium border border-emerald-500/20">
+                        <Landmark className="w-3 h-3" /> {issue.sourcePlatform === 'news_site' ? 'News' : 'Municipal'} {issue.sourceAuthor && `• ${issue.sourceAuthor}`}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-500/20">
+                        <User className="w-3 h-3" /> Citizen Report
+                      </div>
+                    )}
+                    {issue.sourceUrl && (
+                      <a href={issue.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300 transition-colors" title="View Source">
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full bg-zinc-800/80 border border-zinc-700 flex items-center justify-center font-bold text-zinc-400 text-lg" title="Anonymous Report">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 14h20"/><path d="M6.5 14v-2c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5v2"/><path d="M12 21v-4"/><path d="M12 2v2"/><path d="M4 14l-2 4h20l-2-4"/></svg>

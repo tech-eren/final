@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
-import { AlertTriangle, TrendingUp, Group, BrainCircuit, CalendarClock, RefreshCw } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Group, BrainCircuit, CalendarClock, RefreshCw, Wifi } from 'lucide-react';
 import { issueService } from '../../services/mock/issueService';
+import { runAutoScrape, getLastScrapeTime } from '../../services/autoScrapeService';
 import type { CivicInsight } from '../../types';
 
 export function Intelligence() {
   const [insights, setInsights] = useState<CivicInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
+  const [isRescanning, setIsRescanning] = useState(false);
+  const [lastScrapeTime, setLastScrapeTime] = useState<Date | null>(null);
+  const [minutesAgo, setMinutesAgo] = useState<number | null>(null);
 
   useEffect(() => {
+    // Load insights from store
     const fetchInsights = async () => {
       try {
         const data = await issueService.getCivicInsights();
@@ -21,31 +25,35 @@ export function Intelligence() {
       }
     };
     fetchInsights();
+
+    // Read last scrape time from localStorage
+    const t = getLastScrapeTime();
+    setLastScrapeTime(t);
+    if (t) setMinutesAgo(Math.floor((Date.now() - t.getTime()) / 60000));
+
+    // Update the "X minutes ago" counter every minute
+    const interval = setInterval(() => {
+      const lt = getLastScrapeTime();
+      if (lt) setMinutesAgo(Math.floor((Date.now() - lt.getTime()) / 60000));
+    }, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleScanLiveSources = async () => {
-    setIsScanning(true);
+  const handleForceRescan = async () => {
+    setIsRescanning(true);
     try {
-      // 1. Hit our new API route to fetch and process real internet data
-      const response = await fetch('/api/analyze-live-intel');
-      
-      if (!response.ok) {
-        throw new Error('Failed to scan live sources');
-      }
-
-      const newInsights = await response.json();
-      
-      // 2. Client-side handoff: Save the new data into our mock DB (localStorage)
-      if (newInsights && newInsights.length > 0) {
-          const updatedInsights = await issueService.addCivicInsights(newInsights);
-          // 3. Update the UI
-          setInsights(updatedInsights);
-      }
+      // Clear throttle so runAutoScrape is not skipped
+      localStorage.removeItem('civic_resolve_last_auto_scrape');
+      await runAutoScrape();
+      const data = await issueService.getCivicInsights();
+      setInsights(data);
+      const t = getLastScrapeTime();
+      setLastScrapeTime(t);
+      if (t) setMinutesAgo(Math.floor((Date.now() - t.getTime()) / 60000));
     } catch (error) {
-      console.error('Error scanning live sources:', error);
-      alert('Failed to scan live sources. Please try again.');
+      console.error('Error rescanning:', error);
     } finally {
-      setIsScanning(false);
+      setIsRescanning(false);
     }
   };
 
@@ -77,19 +85,31 @@ export function Intelligence() {
                 Civic Intelligence Feed
                 </h1>
                 <p className="text-sm text-slate-500 mt-1">
-                AI-generated insights, anomaly detection, and predictive risk assessments based on incoming civic data.
+                AI automatically scrapes the web for nearby civic issues and posts them here.
                 </p>
             </div>
             
-            <button 
-                onClick={handleScanLiveSources}
-                disabled={isScanning || isLoading}
-                className={`mt-4 md:mt-0 flex items-center px-4 py-2 rounded-md text-white font-medium shadow-sm transition-all
-                    ${isScanning || isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 hover:shadow-md'}`}
-            >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isScanning ? 'animate-spin' : ''}`} />
-                {isScanning ? 'Scanning Live Sources...' : 'Run Live Internet Sweep'}
-            </button>
+            <div className="mt-4 md:mt-0 flex items-center gap-3">
+              {/* Live status indicator */}
+              <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 border border-slate-200 px-3 py-2 rounded-md">
+                <Wifi className="w-4 h-4 text-green-500" />
+                {lastScrapeTime
+                  ? <span>AI scanned <strong>{minutesAgo === 0 ? 'just now' : `${minutesAgo}m ago`}</strong></span>
+                  : <span className="text-slate-400">Scanning on startup…</span>
+                }
+              </div>
+              {/* Force re-scan (bypasses 30-min throttle) */}
+              <button
+                onClick={handleForceRescan}
+                disabled={isRescanning || isLoading}
+                title="Force a fresh web scrape now"
+                className={`flex items-center px-3 py-2 rounded-md text-white text-sm font-medium shadow-sm transition-all
+                  ${isRescanning || isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 hover:shadow-md'}`}
+              >
+                <RefreshCw className={`w-4 h-4 mr-1.5 ${isRescanning ? 'animate-spin' : ''}`} />
+                {isRescanning ? 'Scanning…' : 'Rescan Now'}
+              </button>
+            </div>
         </div>
       </div>
 

@@ -1,70 +1,12 @@
 import type { Issue } from '../../types';
 
-const STORAGE_KEY = 'civic_resolve_mock_issues';
-const STORAGE_KEY_INSIGHTS = 'civic_resolve_mock_insights';
+const STORAGE_KEY = 'civic_resolve_issues_v3';        // bumped to bust old mock cache
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v3'; // bumped to bust old mock cache
 
-// Default mock data
-const defaultIssues: Issue[] = [
-  {
-    id: 'iss_1',
-    category: 'Road Damage',
-    description: 'Deep pothole causing traffic slowdowns and potential vehicle damage.',
-    imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=400',
-    location: {
-      address: 'Central Road, Silchar',
-      latitude: 24.8333,
-      longitude: 92.7789,
-    },
-    severity: 'medium',
-    status: 'Submitted',
-    upvotes: 45,
-    isPetition: false,
-    hashtags: ['#pothole', '#traffic', '#roadRepair'],
-    reportedBy: 'usr_1',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'iss_2',
-    category: 'Broken Streetlight',
-    description: 'Streetlight is flickering and sometimes completely off, making the intersection dangerous at night.',
-    imageUrl: 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&q=80&w=400',
-    location: {
-      address: 'Park Road, Silchar',
-      latitude: 24.8350,
-      longitude: 92.7800,
-    },
-    severity: 'high',
-    status: 'In Progress',
-    upvotes: 152,
-    isPetition: true,
-    hashtags: ['#lighting', '#safety', '#urgent'],
-    reportedBy: 'usr_1',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'iss_3',
-    category: 'Other',
-    description: 'Offensive graffiti sprayed on the north wall of the community park.',
-    imageUrl: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?auto=format&fit=crop&q=80&w=400',
-    location: {
-      address: 'Sonai Road, Silchar',
-      latitude: 24.8310,
-      longitude: 92.7750,
-    },
-    severity: 'low',
-    status: 'Resolved',
-    upvotes: 12,
-    isPetition: false,
-    hashtags: ['#graffiti', '#park'],
-    reportedBy: 'usr_1',
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+// No seed data — Feed is populated only by real user reports and AI-scraped posts
+const defaultIssues: Issue[] = [];
 
-// Initialize from localStorage or use defaults
+// Initialize from localStorage (starts empty on first load)
 const initializeIssues = (): Issue[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -87,35 +29,8 @@ const saveIssues = () => {
   }
 };
 
-const defaultInsights: any[] = [
-  {
-    id: 'ins_1',
-    type: 'anomaly',
-    title: 'Spike in Road Damage Reports',
-    description: 'A 24% increase in pothole reports detected along the 4th Avenue corridor over the last 48 hours.',
-    severity: 'high',
-    actionSuggested: 'Deploy emergency patch crew to 4th Avenue.',
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: 'ins_2',
-    type: 'cluster',
-    title: 'Streetlight Outage Cluster',
-    description: '3 independent reports of broken streetlights in the Downtown zone suggest a systemic grid issue rather than isolated bulb failures.',
-    severity: 'medium',
-    actionSuggested: 'Dispatch electrical team to inspect Downtown sector substation.',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'ins_3',
-    type: 'prediction',
-    title: 'Flood Risk: Centennial Park',
-    description: 'Based on weather forecasts and historical drainage failure data, there is an 85% probability of localized flooding near Centennial Park this weekend.',
-    severity: 'critical',
-    actionSuggested: 'Preemptively clear storm drains in Sector 7.',
-    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
-  }
-];
+// No seed data — Intelligence is populated only by real AI scrape results
+const defaultInsights: any[] = [];
 
 const initializeInsights = (): any[] => {
   try {
@@ -147,6 +62,56 @@ export const issueService = {
     );
   },
 
+  getFeedIssues: async (sort: 'recent' | 'trending', scope: 'nearby' | 'city' | 'state' | 'global', lat?: number, lng?: number): Promise<{ issues: Issue[], scopeApplied: string }> => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const getDist = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      return R * c; 
+    };
+
+    let filtered = [...mockIssues];
+    let scopeApplied = scope as string;
+
+    if (scope !== 'global' && lat !== undefined && lng !== undefined) {
+      if (scope === 'nearby') {
+        const radii = [5, 25, 50, 100]; // 100km is city fallback
+        let foundIssues: Issue[] = [];
+        let appliedRadius = radii[0];
+        
+        for (const radius of radii) {
+          foundIssues = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= radius);
+          appliedRadius = radius;
+          if (foundIssues.length >= 10 || radius === radii[radii.length - 1]) {
+             break;
+          }
+        }
+        filtered = foundIssues;
+        if (appliedRadius !== 5) {
+          scopeApplied = `nearby_${appliedRadius}km`;
+        }
+      } else if (scope === 'city') {
+        filtered = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= 100);
+      } else if (scope === 'state') {
+        filtered = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= 500);
+      }
+    }
+
+    if (sort === 'trending') {
+      filtered.sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0));
+    } else {
+      filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return { issues: filtered, scopeApplied };
+  },
+
   getIssuesByReporter: async (reporterId: string): Promise<Issue[]> => {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -170,6 +135,9 @@ export const issueService = {
       isPetition: false,
       hashtags: [],
       reportedBy: 'usr_1', // Hardcoded mock user ID
+      sourcePlatform: 'user_report',
+      engagementApp: { likes: 0, dislikes: 0, saves: 0 },
+      trendingScore: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -238,10 +206,87 @@ export const issueService = {
     );
   },
 
-  addCivicInsights: async (newInsights: any[]): Promise<any[]> => {
+  addCivicInsights: async (newInsights: any[], userLat?: number, userLng?: number): Promise<any[]> => {
     mockInsights = [...newInsights, ...mockInsights];
     saveInsights();
+
+    // Use the user's real GPS if provided, otherwise fall back to Silchar city centre
+    const baseLat = userLat ?? 24.8333;
+    const baseLng = userLng ?? 92.7789;
+
+    // Convert AI insights into actionable Issues for the Feed
+    const newIssues = newInsights.map((insight, idx) => {
+      let category: any = 'Other';
+      const text = (insight.title + ' ' + insight.description).toLowerCase();
+      if (text.includes('water') || text.includes('pipe')) category = 'Water Leakage';
+      else if (text.includes('traffic') || text.includes('signal')) category = 'Traffic Signal';
+      else if (text.includes('pothole') || text.includes('crater') || text.includes('road')) category = 'Road Damage';
+      else if (text.includes('garbage') || text.includes('trash')) category = 'Garbage Accumulation';
+      else if (text.includes('light')) category = 'Broken Streetlight';
+
+      let source: any = 'news_site';
+      if (text.includes('reddit')) source = 'reddit';
+      else if (text.includes('twitter') || text.includes('tweet') || text.includes(' x ')) source = 'x';
+
+      // Always mark as ai_bot so Feed renders the distinct 🤖 AI Detected badge
+      const sourcePlatform: any = 'ai_bot';
+
+      // Small jitter (~0-2km) so pins don't all stack on top of each other on the map
+      const jitterLat = (Math.random() - 0.5) * 0.03;
+      const jitterLng = (Math.random() - 0.5) * 0.03;
+
+      return {
+        id: `iss_ai_${Date.now()}_${idx}`,
+        category,
+        description: `[AI Detected Insight] ${insight.title}\n\n${insight.description}`,
+        location: {
+          address: 'Local Area (AI Detected)',
+          // Pin near the user's actual location — guaranteed to show in their Nearby feed
+          latitude: baseLat + jitterLat,
+          longitude: baseLng + jitterLng,
+        },
+        severity: insight.severity || 'medium',
+        status: 'Submitted',
+        upvotes: Math.floor(Math.random() * 150) + 20,
+        isPetition: false,
+        reportedBy: 'sys_ai',
+        sourcePlatform,
+        engagementApp: { likes: 0, dislikes: 0, saves: 0 },
+        trendingScore: Math.floor(Math.random() * 300) + 100,
+        createdAt: insight.timestamp,
+        updatedAt: insight.timestamp,
+      };
+    });
+
+    if (newIssues.length > 0) {
+      mockIssues = [...newIssues, ...mockIssues];
+      saveIssues();
+    }
+
     return mockInsights;
+  },
+
+  /**
+   * Removes stale AI-generated issues from the cache (e.g. old Mumbai/Delhi data).
+   * Call this once at startup to ensure a clean slate.
+   */
+  clearStaleAiIssues: () => {
+    const before = mockIssues.length;
+    // Remove any AI-generated issue whose location address is the old generic string
+    // or whose description contains content from cities we no longer target
+    mockIssues = mockIssues.filter(issue => {
+      if (issue.reportedBy !== 'sys_ai') return true; // keep real user reports
+      const desc = (issue.description || '').toLowerCase();
+      // Drop if it looks like it's from the old Mumbai/Delhi era
+      const isStale = desc.includes('yamuna') || desc.includes('mumbai') || desc.includes('bandra')
+        || desc.includes('andheri') || desc.includes('noida') || desc.includes('jvlr')
+        || issue.location?.address === 'Local Area (Detected)'; // old address string
+      return !isStale;
+    });
+    if (mockIssues.length !== before) {
+      console.log(`[IssueService] Cleared ${before - mockIssues.length} stale AI issues from cache.`);
+      saveIssues();
+    }
   },
 
 
