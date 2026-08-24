@@ -18,49 +18,56 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
 
 export function Feed() {
   const { user, toggleLike, toggleDislike, toggleSave } = useUser();
-  const [tab, setTab] = useState<'reported' | 'trending'>('reported');
-  const [scope, setScope] = useState<'nearby' | 'city' | 'state' | 'global'>('nearby');
-  const [appliedScopeInfo, setAppliedScopeInfo] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'nearby' | 'regional' | 'trending'>('nearby');
   const [searchQuery, setSearchQuery] = useState('');
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   
   // State for user's actual location
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number, city?: string, district?: string, state?: string} | null>(null);
 
   useEffect(() => {
-    // Attempt to get user's real location
+    const fetchLocationData = async (lat: number, lng: number) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`);
+        const data = await res.json();
+        const addr = data.address || {};
+        setUserLocation({
+          lat, lng,
+          city: addr.city || addr.town || addr.municipality || '',
+          district: addr.county || addr.state_district || '',
+          state: addr.state || 'Assam'
+        });
+      } catch (e) {
+        setUserLocation({ lat, lng, city: 'Silchar', district: 'Cachar', state: 'Assam' });
+      }
+    };
+
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
-        () => setUserLocation({ lat: 24.8333, lng: 92.7789 }) // Fallback to Silchar if denied
+        (position) => fetchLocationData(position.coords.latitude, position.coords.longitude),
+        () => fetchLocationData(24.8333, 92.7789) // Fallback to Silchar if denied
       );
     } else {
-      setUserLocation({ lat: 24.8333, lng: 92.7789 });
+      fetchLocationData(24.8333, 92.7789);
     }
   }, []);
 
   useEffect(() => {
-    if (!userLocation && scope !== 'global') return;
+    if (!userLocation && activeTab !== 'trending') return;
     
     const fetchIssues = async () => {
       setLoading(true);
-      setAppliedScopeInfo(null);
       try {
-        const { issues: data, scopeApplied } = await issueService.getFeedIssues(
-          tab === 'reported' ? 'recent' : 'trending',
-          scope,
+        const { issues: data } = await issueService.getFeedIssues(
+          activeTab,
           userLocation?.lat,
-          userLocation?.lng
+          userLocation?.lng,
+          userLocation?.city,
+          userLocation?.district,
+          userLocation?.state
         );
         setIssues(data);
-        
-        if (scopeApplied.startsWith('nearby_') && scopeApplied !== 'nearby_5km') {
-          const radius = scopeApplied.split('_')[1];
-          setAppliedScopeInfo(`Showing results within ${radius}`);
-        } else if (scopeApplied === 'city' && scope === 'nearby') {
-          setAppliedScopeInfo('Showing city-wide results');
-        }
       } catch (e) {
         console.error("Failed to load feed", e);
       } finally {
@@ -73,7 +80,7 @@ export function Feed() {
     const handleAiPostsReady = () => { fetchIssues(); };
     window.addEventListener('ai-posts-ready', handleAiPostsReady);
     return () => window.removeEventListener('ai-posts-ready', handleAiPostsReady);
-  }, [tab, scope, userLocation]);
+  }, [activeTab, userLocation]);
 
   const displayedIssues = issues.filter(issue => {
     if (searchQuery.trim()) {
@@ -97,47 +104,39 @@ export function Feed() {
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        {/* Tabs & Scope Selector */}
+        {/* Tabs */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
           <div className="flex gap-2 bg-black/20 p-2 rounded-2xl w-max border border-dark-border">
             <button 
-              onClick={() => setTab('reported')}
+              onClick={() => setActiveTab('nearby')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
-                tab === 'reported' 
+                activeTab === 'nearby' 
                   ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Clock className="w-4 h-4" /> Reported
+              <MapPin className="w-4 h-4" /> Nearby
             </button>
             <button 
-              onClick={() => setTab('trending')}
+              onClick={() => setActiveTab('regional')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
-                tab === 'trending' 
+                activeTab === 'regional' 
+                  ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Landmark className="w-4 h-4" /> Regional
+            </button>
+            <button 
+              onClick={() => setActiveTab('trending')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+                activeTab === 'trending' 
                   ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-[0_4px_12px_rgba(139,92,246,0.4)]' 
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
               <TrendingUp className="w-4 h-4" /> Trending
             </button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-             <select 
-                value={scope}
-                onChange={(e) => setScope(e.target.value as any)}
-                className="bg-black/20 border border-dark-border text-white px-4 py-3 rounded-xl font-medium focus:outline-none focus:border-accent appearance-none cursor-pointer"
-              >
-                <option value="nearby">Nearby</option>
-                <option value="city">City-wide</option>
-                <option value="state">State</option>
-                <option value="global">Global</option>
-             </select>
-             {appliedScopeInfo && (
-               <span className="text-xs text-zinc-400 bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-zinc-700/50 whitespace-nowrap">
-                 {appliedScopeInfo}
-               </span>
-             )}
           </div>
         </div>
 
@@ -222,8 +221,12 @@ export function Feed() {
                     </div>
                     <div>
                       <h4 className="m-0 text-lg font-semibold text-white">{issue.category}</h4>
-                      <p className="m-0 text-sm text-zinc-400">
-                        Anonymous • {new Date(issue.createdAt).toLocaleDateString()} • {issue.location.address}
+                      <p className="m-0 text-sm text-zinc-400 flex items-center gap-1 mt-1">
+                        Anonymous • {new Date(issue.createdAt).toLocaleDateString()} 
+                        <span className="flex items-center ml-2 text-zinc-300">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {[issue.location.city, issue.location.district, issue.location.state].filter(Boolean).join(', ') || issue.location.address}
+                        </span>
                       </p>
                     </div>
                     <span className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide

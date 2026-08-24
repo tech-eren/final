@@ -1,7 +1,7 @@
 import type { Issue } from '../../types';
 
-const STORAGE_KEY = 'civic_resolve_issues_v3';        // bumped to bust old mock cache
-const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v3'; // bumped to bust old mock cache
+const STORAGE_KEY = 'civic_resolve_issues_v7';
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v7';
 
 // No seed data — Feed is populated only by real user reports and AI-scraped posts
 const defaultIssues: Issue[] = [];
@@ -62,7 +62,7 @@ export const issueService = {
     );
   },
 
-  getFeedIssues: async (sort: 'recent' | 'trending', scope: 'nearby' | 'city' | 'state' | 'global', lat?: number, lng?: number): Promise<{ issues: Issue[], scopeApplied: string }> => {
+  getFeedIssues: async (feedType: 'nearby' | 'regional' | 'trending', lat?: number, lng?: number, userCity?: string, userDistrict?: string, userState?: string): Promise<{ issues: Issue[], scopeApplied: string }> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     
     const getDist = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -77,34 +77,57 @@ export const issueService = {
     };
 
     let filtered = [...mockIssues];
-    let scopeApplied = scope as string;
+    let scopeApplied = feedType as string;
 
-    if (scope !== 'global' && lat !== undefined && lng !== undefined) {
-      if (scope === 'nearby') {
-        const radii = [5, 25, 50, 100]; // 100km is city fallback
-        let foundIssues: Issue[] = [];
-        let appliedRadius = radii[0];
+    const NEARBY_RADIUS_KM = 100;
+
+    const safeMatch = (val1?: string, val2?: string) => {
+      if (!val1 || !val2) return false;
+      const v1 = val1.trim().toLowerCase();
+      const v2 = val2.trim().toLowerCase();
+      if (!v1 || !v2) return false;
+      return v1.includes(v2) || v2.includes(v1);
+    };
+
+    if (feedType === 'nearby') {
+      filtered = filtered.filter(i => {
+        const hasValidCoords = typeof i.location.latitude === 'number' && typeof i.location.longitude === 'number' && i.location.latitude !== 0 && i.location.longitude !== 0;
+        const hasCity = i.location.city || i.location.district;
         
-        for (const radius of radii) {
-          foundIssues = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= radius);
-          appliedRadius = radius;
-          if (foundIssues.length >= 10 || radius === radii[radii.length - 1]) {
-             break;
-          }
+        if (!hasValidCoords && !hasCity) return false;
+        
+        let isNearby = false;
+        if (lat !== undefined && lng !== undefined && hasValidCoords) {
+           const dist = getDist(lat, lng, i.location.latitude, i.location.longitude);
+           if (dist <= NEARBY_RADIUS_KM) isNearby = true;
         }
-        filtered = foundIssues;
-        if (appliedRadius !== 5) {
-          scopeApplied = `nearby_${appliedRadius}km`;
+        
+        if (!isNearby) {
+           const cityMatch = safeMatch(i.location.city, userCity);
+           const distMatch = safeMatch(i.location.district, userDistrict);
+           // Also cross-check because AI might put district in the city field
+           const crossMatch1 = safeMatch(i.location.city, userDistrict);
+           const crossMatch2 = safeMatch(i.location.district, userCity);
+           
+           if (cityMatch || distMatch || crossMatch1 || crossMatch2) {
+             isNearby = true;
+           }
         }
-      } else if (scope === 'city') {
-        filtered = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= 100);
-      } else if (scope === 'state') {
-        filtered = filtered.filter(i => getDist(lat, lng, i.location.latitude, i.location.longitude) <= 500);
-      }
+        return isNearby;
+      });
+    } else if (feedType === 'regional') {
+      filtered = filtered.filter(i => {
+        if (!i.location.state) return false;
+        return safeMatch(i.location.state, userState);
+      });
     }
 
-    if (sort === 'trending') {
-      filtered.sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0));
+    if (feedType === 'trending') {
+      filtered.sort((a, b) => {
+        const scoreA = (a.trendingScore || 0) + (a.upvotes || 0);
+        const scoreB = (b.trendingScore || 0) + (b.upvotes || 0);
+        return scoreB - scoreA;
+      });
     } else {
       filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
@@ -240,11 +263,15 @@ export const issueService = {
         category,
         description: `[AI Detected Insight] ${insight.title}\n\n${insight.description}`,
         location: {
-          address: 'Local Area (AI Detected)',
-          // Pin near the user's actual location — guaranteed to show in their Nearby feed
-          latitude: baseLat + jitterLat,
-          longitude: baseLng + jitterLng,
+          address: [insight.city, insight.district, insight.state].filter(Boolean).join(', ') || 'Location Unknown',
+          latitude: typeof insight.latitude === 'number' ? insight.latitude : 0,
+          longitude: typeof insight.longitude === 'number' ? insight.longitude : 0,
+          city: insight.city,
+          district: insight.district,
+          state: insight.state,
+          country: insight.country,
         },
+        scope: insight.scope,
         severity: insight.severity || 'medium',
         status: 'Submitted',
         upvotes: Math.floor(Math.random() * 150) + 20,

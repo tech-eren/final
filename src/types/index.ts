@@ -42,6 +42,10 @@ export interface Location {
   longitude: number;
   address?: string;
   area?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
 }
 
 export interface AIAnalysis {
@@ -80,6 +84,7 @@ export interface Issue {
   engagementOrigin?: { upvotes?: number; comments?: number; shares?: number };
   engagementApp?: { likes: number; dislikes: number; saves: number };
   trendingScore?: number;
+  scope?: 'local' | 'state' | 'national';
 
   createdAt: string;
   updatedAt: string;
@@ -123,6 +128,13 @@ export interface CivicInsight {
   severity: IssueSeverity;
   actionSuggested: string;
   timestamp: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  scope: 'local' | 'state' | 'national';
 }
 
 // Notifications
