@@ -20,7 +20,6 @@ import { DataPrivacySettings } from '../../components/settings/sections/DataPriv
 import { DangerZoneSettings } from '../../components/settings/sections/DangerZoneSettings';
 
 const SETTINGS_TABS = [
-  { id: 'profile', label: 'Profile', category: 'ACCOUNT', icon: User },
   { id: 'notifications', label: 'Notifications', category: 'COMMUNICATION', icon: Bell },
   { id: 'reporting', label: 'Reporting Preferences', category: 'CIVIC EXPERIENCE', icon: Radio },
   { id: 'location', label: 'Location', category: 'CIVIC EXPERIENCE', icon: MapPin },
@@ -38,7 +37,7 @@ const SETTINGS_TABS = [
 ];
 
 export function Settings() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('notifications');
   const [toastMessage, setToastMessage] = useState('');
   
   const showToast = (msg: string) => {
@@ -54,7 +53,6 @@ export function Settings() {
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'profile': return <ProfileSettings showToast={showToast} />;
       case 'notifications': return <NotificationSettings showToast={showToast} />;
       case 'reporting': return <ReportingSettings showToast={showToast} />;
       case 'location': return <LocationSettings showToast={showToast} />;
@@ -67,7 +65,7 @@ export function Settings() {
       case 'security': return <SecuritySettings />;
       case 'data': return <DataPrivacySettings />;
       case 'danger': return <DangerZoneSettings />;
-      default: return <ProfileSettings showToast={showToast} />;
+      default: return <NotificationSettings showToast={showToast} />;
     }
   };
 

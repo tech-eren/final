@@ -86,29 +86,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.warn(`NewsAPI scrape failed: ${err}`);
     }
 
-    // 4. Fallback if both fail or return empty
+    // 4. If no data was found, just return empty early
     if (rawInternetData.trim().length === 0) {
-        console.warn(`All live scrapes failed or returned empty. Using fallback data for demo.`);
-        const location = req.query.location || (req.body && req.body.location) || 'Silchar';
-        rawInternetData = `
-Source: Reddit (r/assam)
-Title: Huge pothole near NIT ${location}
-Text: Bro I just popped my front left tire on this massive crater near the campus. Avoid at all costs.
-Date: 2026-08-23T10:00:00Z
----
-Source: Twitter (@${location}traffic)
-Title: Traffic signal dead at Capital Point junction
-Text: The signals are completely off at Capital Point intersection in ${location}. Total chaos. Need traffic police ASAP!
-Date: 2026-08-23T11:15:00Z
----
-Source: Local News (${location} Chronicle)
-Title: Water pipe bursts in Tarapur
-Text: Residents report low water pressure and severe flooding on Tarapur Road after a main water line ruptured this morning in ${location}.
-Date: 2026-08-23T09:30:00Z
-        `;
+        console.log(`No live data found for ${location}.`);
+        return res.status(200).json([]);
     }
 
-    // 2. AI Analysis
+    // 5. AI Analysis
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.interactions.create({
@@ -120,8 +104,8 @@ Date: 2026-08-23T09:30:00Z
           Identify potential civic issues, infrastructure problems, or emergencies SPECIFICALLY for ${location} or surrounding areas. 
           Ignore any news or posts about other cities.
           Group related posts into single "Insights".
-          Generate exactly 2 to 4 high-quality CivicInsight objects based on the data.
-          If the data is completely irrelevant or from other cities, ignore it and instead generate some plausible mock insights based on typical civic issues in ${location}.
+          Generate exactly 1 to 4 high-quality CivicInsight objects based ONLY on the provided data.
+          If there are no civic issues in the data, return an empty array. Do not invent or mock data.
           
           Raw Internet Data:
           ${rawInternetData}
@@ -142,7 +126,13 @@ Date: 2026-08-23T09:30:00Z
                 description: { type: 'string', description: 'Detailed summary of the issue found in the scraped data' },
                 severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
                 actionSuggested: { type: 'string', description: 'Recommended action for the authority' },
-                timestamp: { type: 'string', description: 'ISO 8601 timestamp string of when this was detected' }
+                timestamp: { type: 'string', description: 'ISO 8601 timestamp string of when this was detected' },
+                city: { type: 'string', description: 'City name where the issue is occurring, if identifiable' },
+                district: { type: 'string', description: 'District name, if identifiable' },
+                state: { type: 'string', description: 'State name, if identifiable' },
+                country: { type: 'string', description: 'Country name, if identifiable' },
+                latitude: { type: 'number', description: 'Estimated latitude of the issue, if identifiable' },
+                longitude: { type: 'number', description: 'Estimated longitude of the issue, if identifiable' }
             },
             required: ['id', 'type', 'title', 'description', 'severity', 'actionSuggested', 'timestamp']
           }

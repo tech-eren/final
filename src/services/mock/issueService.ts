@@ -1,7 +1,7 @@
 import type { Issue } from '../../types';
 
-const STORAGE_KEY = 'civic_resolve_issues_v8';
-const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v8';
+const STORAGE_KEY = 'civic_resolve_issues_v12';
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v12';
 
 // No seed data — Feed is populated only by real user reports and AI-scraped posts
 const defaultIssues: Issue[] = [];
@@ -238,7 +238,16 @@ export const issueService = {
     const baseLng = userLng ?? 92.7789;
 
     // Convert AI insights into actionable Issues for the Feed
-    const newIssues = newInsights.map((insight, idx) => {
+    const deduplicatedInsights = newInsights.filter(insight => {
+      // Don't add if we already have an issue with the same exact title or very similar description
+      const exists = mockIssues.some(existing => 
+        existing.category === insight.title || 
+        existing.description.includes(insight.title)
+      );
+      return !exists;
+    });
+
+    const newIssues = deduplicatedInsights.map((insight, idx) => {
       let category: any = 'Other';
       const text = (insight.title + ' ' + insight.description).toLowerCase();
       if (text.includes('water') || text.includes('pipe')) category = 'Water Leakage';
@@ -273,7 +282,7 @@ export const issueService = {
         },
         scope: insight.scope,
         severity: insight.severity || 'medium',
-        status: 'Submitted',
+        status: (Math.random() > 0.7 ? 'Resolved' : (Math.random() > 0.4 ? 'In Progress' : 'Submitted')) as any,
         upvotes: Math.floor(Math.random() * 150) + 20,
         isPetition: false,
         reportedBy: 'sys_ai',

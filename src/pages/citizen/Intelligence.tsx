@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { AlertTriangle, TrendingUp, Group, BrainCircuit, CalendarClock, RefreshCw, Wifi } from 'lucide-react';
 import { issueService } from '../../services/mock/issueService';
-import { runAutoScrape, getLastScrapeTime } from '../../services/autoScrapeService';
+import { runAutoScrape, getLastScrapeTime, clearScrapeThrottle } from '../../services/autoScrapeService';
 import type { CivicInsight } from '../../types';
 
 export function Intelligence() {
@@ -42,8 +42,7 @@ export function Intelligence() {
   const handleForceRescan = async () => {
     setIsRescanning(true);
     try {
-      // Clear throttle so runAutoScrape is not skipped
-      localStorage.removeItem('civic_resolve_last_auto_scrape');
+      clearScrapeThrottle();
       await runAutoScrape();
       const data = await issueService.getCivicInsights();
       setInsights(data);

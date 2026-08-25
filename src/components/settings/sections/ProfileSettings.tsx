@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SettingsCard } from '../ui/SettingsCard';
 import { useUser } from '../../../context/UserContext';
 
-export function ProfileSettings({ showToast }: any) {
+export function ProfileSettings({ showToast, onSave }: any) {
   const { user, updateUser, updateSettings } = useUser();
   const [displayName, setDisplayName] = useState(user.displayName);
   const [email, setEmail] = useState(user.email);
@@ -19,6 +19,7 @@ export function ProfileSettings({ showToast }: any) {
     updateUser({ displayName, email });
     updateSettings('profile', { phoneNumber: phone, bio });
     showToast('Profile updated successfully.');
+    if (onSave) onSave();
   };
 
   const initial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
@@ -36,10 +37,16 @@ export function ProfileSettings({ showToast }: any) {
             <h4 className="text-xl font-bold text-white m-0">{displayName}</h4>
             <p className="text-zinc-400 text-sm m-0 mb-1">Citizen • Member since August 2026</p>
             <div className="flex items-center justify-center sm:justify-start gap-3 mt-4">
-              <button className="bg-zinc-800 hover:bg-zinc-700 text-white border-none px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <button 
+                onClick={() => showToast('Photo upload is disabled in this demo.')}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white border-none px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
                 Change Photo
               </button>
-              <button className="bg-transparent hover:bg-red-500/10 text-red-400 border border-transparent hover:border-red-500/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <button 
+                onClick={() => showToast('No custom photo to remove.')}
+                className="bg-transparent hover:bg-red-500/10 text-red-400 border border-transparent hover:border-red-500/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
                 Remove Photo
               </button>
             </div>

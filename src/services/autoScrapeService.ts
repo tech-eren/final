@@ -1,7 +1,7 @@
 import { liveIntelService } from './liveIntelService';
 import { issueService } from './mock/issueService';
 
-const THROTTLE_KEY = 'civic_resolve_last_auto_scrape_v5';
+const THROTTLE_KEY = 'civic_resolve_last_auto_scrape_v10';
 const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
 const DEFAULT_LOCATION = {
@@ -40,6 +40,13 @@ function shouldScrape(): boolean {
 function markScraped() {
   try {
     localStorage.setItem(THROTTLE_KEY, Date.now().toString());
+  } catch { /* ignore */ }
+}
+
+export function clearScrapeThrottle() {
+  try {
+    localStorage.removeItem(THROTTLE_KEY);
+    console.log('[AutoScrape] Throttle cleared — will run on next call.');
   } catch { /* ignore */ }
 }
 
