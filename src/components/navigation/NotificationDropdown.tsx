@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCircle, Heart, AlertTriangle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 
 interface Notification {
   id: string;

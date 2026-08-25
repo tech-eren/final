@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 import { MapPin } from 'lucide-react';
 

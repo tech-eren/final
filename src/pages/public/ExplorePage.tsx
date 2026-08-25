@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Clock, ThumbsUp, ThumbsDown, Award } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 
 export function ExplorePage() {

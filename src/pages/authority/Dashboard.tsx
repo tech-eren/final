@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { AlertTriangle, Clock, CheckCircle2, ListTodo } from 'lucide-react';
 import { MapViewer } from '../../components/map/MapViewer';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 
 export function Dashboard() {

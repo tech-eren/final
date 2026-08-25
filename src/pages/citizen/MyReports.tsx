@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import { useUser } from '../../context/UserContext';
 import { Heart, Search, CheckCircle2 } from 'lucide-react';
 import type { Issue } from '../../types';

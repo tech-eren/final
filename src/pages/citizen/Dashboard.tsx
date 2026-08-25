@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Clock, CheckCircle, Trophy, Plus, Eye, EyeOff } from 'lucide-react';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 import { useUser } from '../../context/UserContext';
 import { format } from 'date-fns';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MapViewer } from '../../components/map/MapViewer';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 
 export function MapPage() {

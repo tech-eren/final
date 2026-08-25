@@ -60,10 +60,10 @@ export const liveIntelService = {
         const safeString = (val: any) => typeof val === 'string' && val.length > 30 ? null : val;
         return { 
           ...item, 
-          city: safeString(item.city) || geo.city,
-          district: safeString(item.district) || geo.district,
-          state: safeString(item.state) || geo.state,
-          country: safeString(item.country) || geo.country,
+          city: safeString(item.city) || resolvedGeo.city,
+          district: safeString(item.district) || resolvedGeo.district,
+          state: safeString(item.state) || resolvedGeo.state,
+          country: safeString(item.country) || resolvedGeo.country,
           scope 
         };
       });

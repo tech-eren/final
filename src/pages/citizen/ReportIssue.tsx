@@ -3,7 +3,7 @@ import { UploadCloud, MapPin, Sparkles, Loader2, Image as ImageIcon } from 'luci
 import { LocationPicker } from '../../components/map/LocationPicker';
 import { useToast } from '../../context/ToastContext';
 import { aiService } from '../../services/aiService';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 
 export function ReportIssue() {
   const [location, setLocation] = useState<[number, number]>([24.83, 92.79]); // Default to Silchar, Assam

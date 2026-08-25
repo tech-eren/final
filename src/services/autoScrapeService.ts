@@ -1,5 +1,5 @@
 import { liveIntelService } from './liveIntelService';
-import { issueService } from './mock/issueService';
+import { issueService } from './issueService';
 
 const THROTTLE_KEY = 'civic_resolve_last_auto_scrape_v10';
 const THROTTLE_MS = 30 * 60 * 1000; // 30 minutes

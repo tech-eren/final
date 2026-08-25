@@ -24,7 +24,6 @@ import { Feed } from './pages/citizen/Feed';
 import { Profile } from './pages/citizen/Profile';
 import { Saved } from './pages/citizen/Saved';
 import { Settings } from './pages/citizen/Settings';
-import { Intelligence } from './pages/citizen/Intelligence';
 // Authority Pages
 import { Dashboard as AuthorityDashboard } from './pages/authority/Dashboard';
 import { IssueManagement } from './pages/authority/IssueManagement';
@@ -71,7 +70,6 @@ function App() {
               <Route path="reports" element={<MyReports />} />
               <Route path="saved" element={<Saved />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="intelligence" element={<Intelligence />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 

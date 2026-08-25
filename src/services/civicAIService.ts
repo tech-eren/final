@@ -1,4 +1,4 @@
-import { issueService } from './mock/issueService';
+import { issueService } from './issueService';
 import type { Issue } from '../types';
 
 export type AIMessageType = 'text' | 'suggested_prompts' | 'report_preview' | 'issue_list' | 'tracking_timeline' | 'summary';

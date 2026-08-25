@@ -3,7 +3,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { Search, Filter, AlertTriangle, MoreVertical, CheckCircle2, ListTodo, ThumbsUp, Upload, X } from 'lucide-react';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 
 export function IssueManagement() {

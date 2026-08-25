@@ -84,10 +84,11 @@ export interface Issue {
   engagementOrigin?: { upvotes?: number; comments?: number; shares?: number };
   engagementApp?: { likes: number; dislikes: number; saves: number };
   trendingScore?: number;
-  scope?: 'local' | 'state' | 'national';
+  scope?: 'local' | 'regional' | 'global';
 
   createdAt: string;
   updatedAt: string;
+  source?: 'user';
 }
 
 export interface IssueTimelineEvent {
@@ -134,7 +135,8 @@ export interface CivicInsight {
   country?: string;
   latitude?: number;
   longitude?: number;
-  scope: 'local' | 'state' | 'national';
+  scope: 'local' | 'regional' | 'global';
+  source?: 'live-scrape';
 }
 
 // Notifications

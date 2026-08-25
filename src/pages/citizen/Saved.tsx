@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bookmark, Heart, ThumbsDown } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { Issue } from '../../types';
 
 export function Saved() {

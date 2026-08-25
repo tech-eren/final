@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { Activity, Clock, CheckCircle, AlertOctagon } from 'lucide-react';
-import { issueService } from '../../services/mock/issueService';
+import { issueService } from '../../services/issueService';
 import type { AnalyticsData, Issue } from '../../types';
 import { MapViewer } from '../../components/map/MapViewer';
 

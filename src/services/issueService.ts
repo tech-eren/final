@@ -1,7 +1,7 @@
-import type { Issue } from '../../types';
+import type { Issue } from '../types';
 
-const STORAGE_KEY = 'civic_resolve_issues_v12';
-const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v12';
+const STORAGE_KEY = 'civic_resolve_issues_v14';
+const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v14';
 
 // No seed data — Feed is populated only by real user reports and AI-scraped posts
 const defaultIssues: Issue[] = [];
@@ -19,11 +19,11 @@ const initializeIssues = (): Issue[] => {
   return defaultIssues;
 };
 
-let mockIssues: Issue[] = initializeIssues();
+let localIssues: Issue[] = initializeIssues();
 
 const saveIssues = () => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockIssues));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(localIssues));
   } catch (e) {
     console.error('Failed to save issues to localStorage', e);
   }
@@ -44,11 +44,11 @@ const initializeInsights = (): any[] => {
   return defaultInsights;
 };
 
-let mockInsights: any[] = initializeInsights();
+let localInsights: any[] = initializeInsights();
 
 const saveInsights = () => {
   try {
-    localStorage.setItem(STORAGE_KEY_INSIGHTS, JSON.stringify(mockInsights));
+    localStorage.setItem(STORAGE_KEY_INSIGHTS, JSON.stringify(localInsights));
   } catch (e) {
     console.error('Failed to save insights to localStorage', e);
   }
@@ -57,7 +57,7 @@ const saveInsights = () => {
 export const issueService = {
   getAllIssues: async (): Promise<Issue[]> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    return [...mockIssues].sort((a, b) => 
+    return [...localIssues].sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   },
@@ -76,7 +76,7 @@ export const issueService = {
       return R * c; 
     };
 
-    let filtered = [...mockIssues];
+    let filtered = [...localIssues];
     let scopeApplied = feedType as string;
 
     const NEARBY_RADIUS_KM = 100;
@@ -91,12 +91,19 @@ export const issueService = {
 
     if (feedType === 'nearby') {
       filtered = filtered.filter(i => {
+        // Must be marked as local, or within 100km radius, or matching city/district
+        if (i.scope === 'global' || i.scope === 'regional') return false;
+
         const hasValidCoords = typeof i.location.latitude === 'number' && typeof i.location.longitude === 'number' && i.location.latitude !== 0 && i.location.longitude !== 0;
         const hasCity = i.location.city || i.location.district;
         
-        if (!hasValidCoords && !hasCity) return false;
+        if (!hasValidCoords && !hasCity && i.scope !== 'local') return false;
         
         let isNearby = false;
+        if (i.scope === 'local' && safeMatch(i.location.city, userCity)) {
+            isNearby = true;
+        }
+
         if (lat !== undefined && lng !== undefined && hasValidCoords) {
            const dist = getDist(lat, lng, i.location.latitude, i.location.longitude);
            if (dist <= NEARBY_RADIUS_KM) isNearby = true;
@@ -105,7 +112,6 @@ export const issueService = {
         if (!isNearby) {
            const cityMatch = safeMatch(i.location.city, userCity);
            const distMatch = safeMatch(i.location.district, userDistrict);
-           // Also cross-check because AI might put district in the city field
            const crossMatch1 = safeMatch(i.location.city, userDistrict);
            const crossMatch2 = safeMatch(i.location.district, userCity);
            
@@ -117,18 +123,25 @@ export const issueService = {
       });
     } else if (feedType === 'regional') {
       filtered = filtered.filter(i => {
+        // Must be regional scope, or matching state
+        if (i.scope === 'global') return false;
+        if (i.scope === 'regional') return true;
         if (!i.location.state) return false;
         return safeMatch(i.location.state, userState);
       });
-    }
-
-    if (feedType === 'trending') {
+    } else if (feedType === 'trending') {
+      filtered = filtered.filter(i => {
+        // Show global/national issues, or extremely high upvoted ones regardless of scope
+        return i.scope === 'global' || (i.location.country && safeMatch(i.location.country, 'India')) || (i.upvotes && i.upvotes > 500);
+      });
       filtered.sort((a, b) => {
         const scoreA = (a.trendingScore || 0) + (a.upvotes || 0);
         const scoreB = (b.trendingScore || 0) + (b.upvotes || 0);
         return scoreB - scoreA;
       });
-    } else {
+    }
+
+    if (feedType !== 'trending') {
       filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
@@ -138,7 +151,7 @@ export const issueService = {
   getIssuesByReporter: async (reporterId: string): Promise<Issue[]> => {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 800));
-    return mockIssues.filter(issue => issue.reportedBy === reporterId).sort((a, b) => 
+    return localIssues.filter(issue => issue.reportedBy === reporterId).sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   },
@@ -163,16 +176,17 @@ export const issueService = {
       trendingScore: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      source: 'user',
     };
 
-    mockIssues = [newIssue, ...mockIssues];
+    localIssues = [newIssue, ...localIssues];
     saveIssues();
     return newIssue;
   },
   
   getDashboardStats: async (reporterId: string) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const userIssues = mockIssues.filter(issue => issue.reportedBy === reporterId);
+    const userIssues = localIssues.filter(issue => issue.reportedBy === reporterId);
     
     return {
       totalReported: userIssues.length,
@@ -185,52 +199,83 @@ export const issueService = {
   getIssuesByDepartment: async (_departmentId: string): Promise<Issue[]> => {
     // In this mock, we just return all issues since we don't have department routing yet
     await new Promise((resolve) => setTimeout(resolve, 800));
-    return [...mockIssues].sort((a, b) => 
+    return [...localIssues].sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   },
 
   updateIssue: async (issueId: string, updates: Partial<Issue>): Promise<Issue> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const issueIndex = mockIssues.findIndex(i => i.id === issueId);
+    const issueIndex = localIssues.findIndex(i => i.id === issueId);
     if (issueIndex === -1) throw new Error('Issue not found');
     
     const updatedIssue = { 
-      ...mockIssues[issueIndex], 
+      ...localIssues[issueIndex], 
       ...updates,
       updatedAt: new Date().toISOString()
     };
     
-    mockIssues[issueIndex] = updatedIssue;
+    localIssues[issueIndex] = updatedIssue;
     saveIssues();
     return updatedIssue;
   },
 
   updateIssueStatus: async (issueId: string, newStatus: string): Promise<Issue> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const issueIndex = mockIssues.findIndex(i => i.id === issueId);
+    const issueIndex = localIssues.findIndex(i => i.id === issueId);
     if (issueIndex === -1) throw new Error('Issue not found');
     
     const updatedIssue = { 
-      ...mockIssues[issueIndex], 
+      ...localIssues[issueIndex], 
       status: newStatus as any,
       updatedAt: new Date().toISOString()
     };
     
-    mockIssues[issueIndex] = updatedIssue;
+    localIssues[issueIndex] = updatedIssue;
     saveIssues();
     return updatedIssue;
   },
 
-  getCivicInsights: async (): Promise<any[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return [...mockInsights].sort((a, b) => 
+  getCivicInsights: async (feedType?: 'nearby' | 'regional' | 'trending', userCity?: string, userDistrict?: string, userState?: string): Promise<any[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const safeMatch = (val1?: string, val2?: string) => {
+      if (!val1 || !val2) return false;
+      const v1 = val1.trim().toLowerCase();
+      const v2 = val2.trim().toLowerCase();
+      if (!v1 || !v2) return false;
+      return v1.includes(v2) || v2.includes(v1);
+    };
+
+    let filtered = [...localInsights];
+
+    if (feedType === 'nearby') {
+      filtered = filtered.filter(i => {
+        if (i.scope && i.scope !== 'local') return false;
+        // Must match city or district
+        return safeMatch(i.city, userCity) || safeMatch(i.district, userDistrict) || safeMatch(i.city, userDistrict) || safeMatch(i.district, userCity);
+      });
+    } else if (feedType === 'regional') {
+      filtered = filtered.filter(i => {
+        if (i.scope === 'global') return false;
+        if (i.scope === 'regional') return safeMatch(i.state, userState);
+        // Also show local items from the same state
+        return safeMatch(i.state, userState);
+      });
+    } else if (feedType === 'trending') {
+      filtered = filtered.filter(i => {
+        return i.scope === 'global' || safeMatch(i.country, 'India');
+      });
+    }
+
+    return filtered.sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   },
 
   addCivicInsights: async (newInsights: any[], userLat?: number, userLng?: number): Promise<any[]> => {
-    mockInsights = [...newInsights, ...mockInsights];
+    const taggedInsights = newInsights.map(insight => ({ ...insight, source: 'live-scrape' }));
+    localInsights = [...taggedInsights, ...localInsights];
     saveInsights();
 
     // Use the user's real GPS if provided, otherwise fall back to Silchar city centre
@@ -238,9 +283,9 @@ export const issueService = {
     const baseLng = userLng ?? 92.7789;
 
     // Convert AI insights into actionable Issues for the Feed
-    const deduplicatedInsights = newInsights.filter(insight => {
+    const deduplicatedInsights = taggedInsights.filter(insight => {
       // Don't add if we already have an issue with the same exact title or very similar description
-      const exists = mockIssues.some(existing => 
+      const exists = localIssues.some(existing => 
         existing.category === insight.title || 
         existing.description.includes(insight.title)
       );
@@ -295,11 +340,11 @@ export const issueService = {
     });
 
     if (newIssues.length > 0) {
-      mockIssues = [...newIssues, ...mockIssues];
+      localIssues = [...newIssues, ...localIssues];
       saveIssues();
     }
 
-    return mockInsights;
+    return localInsights;
   },
 
   /**
@@ -307,10 +352,10 @@ export const issueService = {
    * Call this once at startup to ensure a clean slate.
    */
   clearStaleAiIssues: () => {
-    const before = mockIssues.length;
+    const before = localIssues.length;
     // Remove any AI-generated issue whose location address is the old generic string
     // or whose description contains content from cities we no longer target
-    mockIssues = mockIssues.filter(issue => {
+    localIssues = localIssues.filter(issue => {
       if (issue.reportedBy !== 'sys_ai') return true; // keep real user reports
       const desc = (issue.description || '').toLowerCase();
       // Drop if it looks like it's from the old Mumbai/Delhi era
@@ -319,8 +364,8 @@ export const issueService = {
         || issue.location?.address === 'Local Area (Detected)'; // old address string
       return !isStale;
     });
-    if (mockIssues.length !== before) {
-      console.log(`[IssueService] Cleared ${before - mockIssues.length} stale AI issues from cache.`);
+    if (localIssues.length !== before) {
+      console.log(`[IssueService] Cleared ${before - localIssues.length} stale AI issues from cache.`);
       saveIssues();
     }
   },
@@ -329,15 +374,15 @@ export const issueService = {
   getSystemAnalytics: async () => {
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const totalReports = mockIssues.length;
-    const pendingReview = mockIssues.filter(i => i.status === 'Submitted').length;
-    const inProgress = mockIssues.filter(i => i.status === 'In Progress').length;
-    const resolved = mockIssues.filter(i => i.status === 'Resolved').length;
+    const totalReports = localIssues.length;
+    const pendingReview = localIssues.filter(i => i.status === 'Submitted').length;
+    const inProgress = localIssues.filter(i => i.status === 'In Progress').length;
+    const resolved = localIssues.filter(i => i.status === 'Resolved').length;
 
     const resolutionRate = totalReports > 0 ? Number(((resolved / totalReports) * 100).toFixed(1)) : 0;
 
     let avgResolutionTime = 0;
-    const resolvedIssues = mockIssues.filter(i => i.status === 'Resolved');
+    const resolvedIssues = localIssues.filter(i => i.status === 'Resolved');
     if (resolvedIssues.length > 0) {
       const totalTimeMs = resolvedIssues.reduce((sum, issue) => {
         return sum + (new Date(issue.updatedAt).getTime() - new Date(issue.createdAt).getTime());
@@ -358,7 +403,7 @@ export const issueService = {
       reportsOverTime.push({ date: dateStr, count: 0 });
     }
 
-    mockIssues.forEach(issue => {
+    localIssues.forEach(issue => {
       issuesByCategory[issue.category] = (issuesByCategory[issue.category] || 0) + 1;
       
       if (issuesBySeverity[issue.severity] !== undefined) {
