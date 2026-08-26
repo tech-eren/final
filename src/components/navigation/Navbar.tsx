@@ -54,17 +54,7 @@ export function Navbar({ onMenuClick, showMenuButton = false, userRole = null }:
               </>
             ) : (
               <>
-                <button className="p-2 rounded-full text-slate-400 hover:text-slate-500 hover:bg-slate-100">
-                  <Bell className="w-5 h-5" />
-                </button>
-                <div className="relative ml-3">
-                  <button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                    <span className="sr-only">Open user menu</span>
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">
-                      <User className="w-5 h-5 text-slate-500" />
-                    </div>
-                  </button>
-                </div>
+                {/* Icons removed as requested */}
               </>
             )}
           </div>

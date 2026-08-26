@@ -104,11 +104,26 @@ export function IssueManagement() {
     }
   };
 
-  const filteredIssues = issues.filter(issue => 
-    issue.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    issue.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    issue.location.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+
+  const filteredIssues = issues.filter(issue => {
+    const searchLower = searchTerm.toLowerCase();
+    const addressLower = issue.location.address?.toLowerCase() || '';
+    
+    const matchesSearch = 
+      issue.category.toLowerCase().includes(searchLower) ||
+      issue.description.toLowerCase().includes(searchLower) ||
+      addressLower.includes(searchLower);
+
+    let matchesLocation = true;
+    if (locationFilter === 'local') {
+      matchesLocation = addressLower.includes('silchar') || addressLower.includes('cachar');
+    } else if (locationFilter === 'regional') {
+      matchesLocation = addressLower.includes('assam');
+    }
+    
+    return matchesSearch && matchesLocation;
+  });
 
   return (
     <div className="space-y-6">
@@ -117,8 +132,8 @@ export function IssueManagement() {
           <h1 className="text-2xl font-bold text-slate-900">Issue Management</h1>
           <p className="text-sm text-slate-500">Triage, assign, and update reported issues.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64 min-w-[200px]">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
             </div>
@@ -130,9 +145,20 @@ export function IssueManagement() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" icon={Filter} className="flex-shrink-0">
-            Filter
-          </Button>
+          <div className="relative flex-shrink-0 min-w-[160px]">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Filter className="h-4 w-4 text-slate-400" />
+            </div>
+            <select
+              className="block w-full pl-10 pr-8 py-2 border border-slate-300 rounded-md leading-5 bg-white text-slate-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm appearance-none cursor-pointer"
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+            >
+              <option value="all">All Locations</option>
+              <option value="local">Nearby (Silchar)</option>
+              <option value="regional">Regional (Assam)</option>
+            </select>
+          </div>
         </div>
       </div>
 
