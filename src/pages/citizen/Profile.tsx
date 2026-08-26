@@ -8,6 +8,21 @@ export function Profile() {
   const { user, toggleAnonymity } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [stats, setStats] = useState({ posts: 0, cases: 0, likes: 0 });
+  
+  React.useEffect(() => {
+    import('../../services/issueService').then(({ issueService }) => {
+      issueService.getIssuesByReporter(user.id).then(issues => {
+        const totalCases = issues.length;
+        const totalLikes = issues.reduce((acc, curr) => acc + (curr.upvotes || 0), 0);
+        setStats({
+          posts: user.likedIssues.length + user.savedIssues.length + totalCases,
+          cases: totalCases,
+          likes: totalLikes + (user.likedIssues.length * 5)
+        });
+      });
+    });
+  }, [user.id, user.likedIssues, user.savedIssues]);
   
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -56,15 +71,15 @@ export function Profile() {
           
           <div className="flex justify-center gap-16 mb-12 bg-black/20 p-6 rounded-2xl border border-dark-border max-w-md mx-auto">
             <div>
-              <h3 className="m-0 text-3xl text-white font-bold mb-1">42</h3>
+              <h3 className="m-0 text-3xl text-white font-bold mb-1">{stats.posts}</h3>
               <span className="text-zinc-400 text-sm uppercase tracking-wider font-semibold">Posts</span>
             </div>
             <div>
-              <h3 className="m-0 text-3xl text-white font-bold mb-1">12</h3>
+              <h3 className="m-0 text-3xl text-white font-bold mb-1">{stats.cases}</h3>
               <span className="text-zinc-400 text-sm uppercase tracking-wider font-semibold">Cases</span>
             </div>
             <div>
-              <h3 className="m-0 text-3xl text-white font-bold mb-1">1.2k</h3>
+              <h3 className="m-0 text-3xl text-white font-bold mb-1">{stats.likes >= 1000 ? (stats.likes / 1000).toFixed(1) + 'k' : stats.likes}</h3>
               <span className="text-zinc-400 text-sm uppercase tracking-wider font-semibold">Likes</span>
             </div>
           </div>

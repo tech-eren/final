@@ -4,6 +4,7 @@ import { issueService } from '../../services/issueService';
 import { useToast } from '../../context/ToastContext';
 import { useUser } from '../../context/UserContext';
 import type { Issue, CivicInsight } from '../../types';
+import { EscalationControls } from '../../components/feed/EscalationControls';
 
 // Helper to calculate distance in km between two coordinates
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -363,6 +364,17 @@ export function Feed() {
                       )}
                     </div>
                     
+                    <EscalationControls 
+                      issue={issue} 
+                      onUpdate={(updated) => {
+                        setFeedItems(prev => prev.map(p => 
+                          (p.kind === 'issue' && p.issue.id === updated.id) 
+                            ? { ...p, issue: updated } 
+                            : p
+                        ));
+                      }} 
+                    />
+
                     <div className="flex items-center gap-6 pt-4 border-t border-dark-border">
                       <button 
                         onClick={() => toggleLike(issue.id)}

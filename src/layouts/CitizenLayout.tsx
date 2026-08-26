@@ -7,8 +7,11 @@ import {
   User,
   Bookmark,
   Settings,
-  Map as MapIcon
+  Map as MapIcon,
+  Users,
+  Clock
 } from 'lucide-react';
+import { issueService } from '../services/issueService';
 import { Sidebar } from '../components/navigation/Sidebar';
 import type { SidebarItem } from '../components/navigation/Sidebar';
 import { FloatingAssistant } from '../components/ai/FloatingAssistant';
@@ -17,6 +20,7 @@ import { NotificationDropdown } from '../components/navigation/NotificationDropd
 
 const citizenNavigation: SidebarItem[] = [
   { name: 'Feed', href: '/citizen/feed', icon: LayoutList },
+  { name: 'Petitions', href: '/citizen/petitions', icon: Users },
   { name: 'Profile', href: '/citizen/profile', icon: User },
   { name: 'My Cases', href: '/citizen/reports', icon: FileText },
   { name: 'Report', href: '/citizen/report', icon: FileText },
@@ -27,8 +31,14 @@ const citizenNavigation: SidebarItem[] = [
 
 export function CitizenLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [timeMenuOpen, setTimeMenuOpen] = useState(false);
   const location = useLocation();
   const isMapRoute = location.pathname === '/citizen/map';
+
+  const handleTimeTravel = (days: number) => {
+    issueService.devTimeTravel(days);
+    setTimeMenuOpen(false);
+  };
 
   return (
     <div className="flex min-h-screen max-w-[1400px] mx-auto text-white relative">
@@ -46,6 +56,34 @@ export function CitizenLayout() {
 
       {/* Top Right Actions */}
       <div className="fixed top-4 right-4 lg:top-8 lg:right-8 z-40 flex items-center gap-4">
+        {/* Dev Time Travel Tool */}
+        <div className="relative">
+          <button 
+            onClick={() => setTimeMenuOpen(!timeMenuOpen)}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-medium hover:bg-purple-500/20 transition-colors"
+          >
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">Dev Time Travel</span>
+          </button>
+          
+          {timeMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-dark-card border border-dark-border rounded-xl shadow-xl overflow-hidden py-1 z-50">
+              <div className="px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider border-b border-dark-border">
+                Fast Forward Time
+              </div>
+              <button onClick={() => handleTimeTravel(30)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 transition-colors">
+                +30 Days (Appeal 1)
+              </button>
+              <button onClick={() => handleTimeTravel(45)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 transition-colors">
+                +45 Days (Appeal 2)
+              </button>
+              <button onClick={() => handleTimeTravel(60)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 transition-colors">
+                +60 Days (Mod Review)
+              </button>
+            </div>
+          )}
+        </div>
+
         <NotificationDropdown />
       </div>
 

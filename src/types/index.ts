@@ -89,6 +89,16 @@ export interface Issue {
   createdAt: string;
   updatedAt: string;
   source?: 'user';
+  
+  // Escalation & Petition
+  escalationState?: 'NONE' | 'APPEAL_1' | 'APPEAL_2' | 'APPEAL_3' | 'MOD_REVIEW' | 'PETITION_ELIGIBLE' | 'PETITION_ACTIVE' | 'PETITION_SUBMITTED';
+  petitionData?: {
+    signatures: number;
+    target: number;
+    deadline: string;
+    signedBy: string[];
+  };
+  appealHistory?: any[];
 }
 
 export interface IssueTimelineEvent {

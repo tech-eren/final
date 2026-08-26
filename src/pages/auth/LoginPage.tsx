@@ -4,7 +4,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<'CITIZEN' | 'AUTHORITY'>('CITIZEN');
+  const [role, setRole] = useState<'CITIZEN' | 'AUTHORITY' | 'MODERATOR'>('CITIZEN');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,8 +19,10 @@ export function LoginPage() {
       setIsLoading(false);
       if (role === 'CITIZEN') {
         navigate('/citizen/feed');
-      } else {
+      } else if (role === 'AUTHORITY') {
         navigate('/authority/dashboard');
+      } else {
+        navigate('/moderator/queue');
       }
     }, 1000);
   };
@@ -69,6 +71,16 @@ export function LoginPage() {
               onClick={() => setRole('AUTHORITY')}
             >
               Authority
+            </button>
+            <button
+              className={`flex-1 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ${
+                role === 'MODERATOR' 
+                  ? 'bg-gradient-to-r from-accent-gradientStart to-accent-gradientEnd text-white shadow-lg' 
+                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+              }`}
+              onClick={() => setRole('MODERATOR')}
+            >
+              Moderator
             </button>
           </div>
 

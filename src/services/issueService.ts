@@ -3,16 +3,92 @@ import type { Issue } from '../types';
 const STORAGE_KEY = 'civic_resolve_issues_v14';
 const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v14';
 
-// No seed data — Feed is populated only by real user reports and AI-scraped posts
-const defaultIssues: Issue[] = [];
+// Seed data for consistent demos
+const defaultIssues: Issue[] = [
+  {
+    id: 'iss_seed_1',
+    category: 'infrastructure',
+    description: 'Waterlogging reportedly occurs even after relatively light rain',
+    location: { address: 'Tarapur, Silchar', city: 'Silchar', district: 'Cachar', state: 'Assam', latitude: 24.8333, longitude: 92.7789 },
+    severity: 'medium',
+    status: 'Submitted',
+    upvotes: 0,
+    isPetition: false,
+    reportedBy: 'usr_1',
+    sourcePlatform: 'user_report',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    escalationState: 'NONE',
+    appealHistory: [],
+  },
+  {
+    id: 'iss_seed_2',
+    category: 'public_service',
+    description: 'Streetlights on Main Street have been out for 3 weeks',
+    location: { address: 'Main St, Silchar', city: 'Silchar', district: 'Cachar', state: 'Assam', latitude: 24.82, longitude: 92.8 },
+    severity: 'high',
+    status: 'In Progress',
+    upvotes: 45,
+    isPetition: true,
+    reportedBy: 'usr_1',
+    sourcePlatform: 'user_report',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    escalationState: 'PETITION_ELIGIBLE',
+    appealHistory: [],
+  },
+  {
+    id: 'iss_seed_3',
+    category: 'Garbage Accumulation',
+    description: 'Massive garbage pile near the local school causing health hazards.',
+    location: { address: 'School Road, Silchar', city: 'Silchar', district: 'Cachar', state: 'Assam', latitude: 24.84, longitude: 92.78 },
+    severity: 'critical',
+    status: 'In Progress',
+    upvotes: 120,
+    isPetition: true,
+    reportedBy: 'usr_2',
+    sourcePlatform: 'user_report',
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    escalationState: 'PETITION_ACTIVE',
+    petitionData: {
+      signatures: 347,
+      target: 1000,
+      deadline: new Date(Date.now() + 604800000).toISOString(),
+      signedBy: ['usr_1', 'usr_3']
+    },
+    appealHistory: [],
+  }
+];
+
+const SEED_IDS_TO_FORCE = ['iss_seed_1', 'iss_seed_2', 'iss_seed_3'];
 
 // Initialize from localStorage (starts empty on first load)
 const initializeIssues = (): Issue[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
+    let parsed: Issue[] = [];
     if (saved) {
-      return JSON.parse(saved);
+      parsed = JSON.parse(saved);
     }
+    
+    // Force-merge seeds
+    const existingIds = new Set(parsed.map(i => i.id));
+    for (const seed of defaultIssues) {
+      if (SEED_IDS_TO_FORCE.includes(seed.id) && !existingIds.has(seed.id)) {
+        parsed.push(seed);
+      }
+    }
+    
+    // Auto-save if we modified it by injecting seeds
+    if (parsed.length > (saved ? JSON.parse(saved).length : 0)) {
+       setTimeout(() => {
+         localIssues = parsed;
+         saveIssues();
+       }, 100);
+    }
+    
+    return parsed;
   } catch (e) {
     console.error('Failed to load issues from localStorage', e);
   }
@@ -170,7 +246,7 @@ export const issueService = {
       upvotes: 0,
       isPetition: false,
       hashtags: [],
-      reportedBy: 'usr_1', // Hardcoded mock user ID
+      reportedBy: data.reportedBy || 'usr_1', // Use real user id or fallback
       sourcePlatform: 'user_report',
       engagementApp: { likes: 0, dislikes: 0, saves: 0 },
       trendingScore: 0,
@@ -434,5 +510,25 @@ export const issueService = {
       issuesBySeverity,
       reportsOverTime
     };
+  },
+
+  /**
+   * DEV TOOL: Ages all local issues by a certain number of days to test escalation rules.
+   */
+  devTimeTravel: async (days: number): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const msToAge = days * 24 * 60 * 60 * 1000;
+    
+    localIssues = localIssues.map(issue => {
+      const oldTime = new Date(issue.createdAt).getTime();
+      return {
+        ...issue,
+        createdAt: new Date(oldTime - msToAge).toISOString(),
+        updatedAt: new Date(new Date(issue.updatedAt).getTime() - msToAge).toISOString()
+      };
+    });
+    
+    saveIssues();
+    window.location.reload(); // Refresh the page to reflect aged data
   }
 };

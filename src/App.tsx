@@ -7,6 +7,7 @@ import { RootLayout } from './layouts/RootLayout';
 import { CitizenLayout } from './layouts/CitizenLayout';
 import { AuthorityLayout } from './layouts/AuthorityLayout';
 import { AdminLayout } from './layouts/AdminLayout';
+import { ModeratorLayout } from './layouts/ModeratorLayout';
 import { runAutoScrape } from './services/autoScrapeService';
 
 // Public Pages
@@ -24,6 +25,7 @@ import { Feed } from './pages/citizen/Feed';
 import { Profile } from './pages/citizen/Profile';
 import { Saved } from './pages/citizen/Saved';
 import { Settings } from './pages/citizen/Settings';
+import { Petitions } from './pages/citizen/Petitions';
 // Authority Pages
 import { Dashboard as AuthorityDashboard } from './pages/authority/Dashboard';
 import { IssueManagement } from './pages/authority/IssueManagement';
@@ -31,6 +33,9 @@ import { Analytics as AuthorityAnalytics } from './pages/authority/Analytics';
 
 // Admin Pages
 import { UserManagement } from './pages/admin/UserManagement';
+
+// Moderator Pages
+import { Queue as ModQueue } from './pages/moderator/Queue';
 
 // Reusable Placeholder component for unbuilt pages
 function Placeholder({ title }: { title: string }) {
@@ -71,6 +76,7 @@ function App() {
               <Route path="saved" element={<Saved />} />
               <Route path="settings" element={<Settings />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="petitions" element={<Petitions />} />
             </Route>
 
             {/* Authority Routes */}
@@ -90,6 +96,14 @@ function App() {
               <Route path="settings" element={<Placeholder title="System Settings" />} />
               <Route path="logs" element={<Placeholder title="Audit Logs" />} />
               <Route path="database" element={<Placeholder title="Database Status" />} />
+            </Route>
+
+            {/* Moderator Routes */}
+            <Route path="/moderator" element={<ModeratorLayout />}>
+              <Route path="dashboard" element={<Placeholder title="Moderator Dashboard" />} />
+              <Route path="queue" element={<ModQueue />} />
+              <Route path="community" element={<Placeholder title="Community Management" />} />
+              <Route path="settings" element={<Placeholder title="Moderator Settings" />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -14,8 +14,8 @@ export function Dashboard() {
   useEffect(() => {
     const fetchIssues = async () => {
       try {
-        // Fetch issues reported by the user (mock user 'usr_1' or just all issues for prototype)
-        const data = await issueService.getIssuesByReporter('usr_1');
+        // Fetch issues reported by the user
+        const data = await issueService.getIssuesByReporter(user.id);
         setIssues(data);
       } catch (error) {
         console.error('Failed to fetch issues', error);

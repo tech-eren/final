@@ -3,6 +3,7 @@ import { issueService } from '../../services/issueService';
 import { useUser } from '../../context/UserContext';
 import { Heart, Search, CheckCircle2 } from 'lucide-react';
 import type { Issue } from '../../types';
+import { EscalationControls } from '../../components/feed/EscalationControls';
 
 export function MyReports() {
   const { user } = useUser();
@@ -17,7 +18,7 @@ export function MyReports() {
       try {
         const allIssues = await issueService.getAllIssues();
         const relevantIssues = allIssues.filter(
-          i => i.reportedBy === 'usr_1' || user.likedIssues.includes(i.id)
+          i => i.reportedBy === user.id || user.likedIssues.includes(i.id)
         );
         setIssues(relevantIssues);
       } catch (e) {
@@ -103,7 +104,7 @@ export function MyReports() {
              else if (issue.status === 'In Progress') progress = 60;
              else if (issue.status === 'Resolved') progress = 100;
              
-             const isLikedNotReported = issue.reportedBy !== 'usr_1';
+             const isLikedNotReported = issue.reportedBy !== user.id;
 
              return (
               <div 
@@ -142,11 +143,18 @@ export function MyReports() {
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-zinc-500 text-right m-0">
+                <p className="text-xs text-zinc-500 text-right m-0 mb-4">
                   {issue.status === 'Submitted' ? 'Awaiting review' : 
                    issue.status === 'In Progress' ? 'City crew assigned' : 
                    'Case closed'}
                 </p>
+
+                <EscalationControls 
+                  issue={issue} 
+                  onUpdate={(updated) => {
+                    setIssues(prev => prev.map(p => p.id === updated.id ? updated : p));
+                  }} 
+                />
 
                 {issue.status === 'Resolved' && issue.resolutionPhotoUrl && (
                   <div className="mt-4 pt-4 border-t border-dark-border">
