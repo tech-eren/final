@@ -28,6 +28,12 @@ function getUserLocation(): Promise<{ lat: number; lng: number }> {
 }
 
 function shouldScrape(): boolean {
+  // Disable live scraping during local development (localhost)
+  if (import.meta.env.DEV) {
+    console.log('[AutoScrape] Disabled in local development environment.');
+    return false;
+  }
+
   try {
     const last = localStorage.getItem(THROTTLE_KEY);
     if (!last) return true;
