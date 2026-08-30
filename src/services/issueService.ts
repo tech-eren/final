@@ -85,11 +85,10 @@ const cleanExistingGarbage = (issues: Issue[]): Issue[] => {
       if (title && seenAiTitles.has(title)) return false;
       if (title) seenAiTitles.add(title);
       
-      // 3. Semantic Hackathon Cleanup: Drop overlapping reports of the same incident
+      // 3. Drop all instances of NIT Silchar and Krishnapur mock insights
       const desc = (issue.description || '').toLowerCase();
-      if (desc.includes('nit silchar') && desc.includes('gate') && desc.includes('road')) {
-        if (seenAiTitles.has('NIT_SILCHAR_INCIDENT')) return false;
-        seenAiTitles.add('NIT_SILCHAR_INCIDENT');
+      if (desc.includes('nit silchar') || desc.includes('krishnapur')) {
+        return false;
       }
     } else {
       // Drop broken manual user submission
@@ -100,6 +99,14 @@ const cleanExistingGarbage = (issues: Issue[]): Issue[] => {
       }
     }
     
+    // 4. Drop Cachar College clash duplicates that were previously generated
+    const descLower = (issue.description || '').toLowerCase();
+    const titleLower = ((issue as any).title || '').toLowerCase();
+    if ((descLower.includes('cachar college') || titleLower.includes('cachar college')) && 
+        (descLower.includes('abvp') || descLower.includes('nsui') || descLower.includes('clash') || titleLower.includes('clash'))) {
+      return false;
+    }
+
     return true;
   });
 };

@@ -1,20 +1,4 @@
-﻿[
-    {
-        "id":  "ins_silchar_001",
-        "type":  "anomaly",
-        "title":  "Student Clash at Cachar College in Silchar",
-        "description":  "ABVP and NSUI supporters clashed at Cachar College in Silchar during a membership drive amid an ongoing hijab row, resulting in injuries to several students before police intervention.",
-        "severity":  "high",
-        "actionSuggested":  "Increase police security around college campuses during student union drives and establish peace committees to prevent communal tensions.",
-        "timestamp":  "2026-08-25T17:51:09Z",
-        "scope":  "local",
-        "state":  "Assam",
-        "country":  "India",
-        "city":  "Silchar",
-        "district":  "Cachar",
-        "latitude":  24.8333,
-        "longitude":  92.7789
-    },
+[
     {
         "id":  "ins_silchar_002",
         "type":  "anomaly",
@@ -62,22 +46,6 @@
         "district":  "Golaghat",
         "latitude":  26.52,
         "longitude":  93.96
-    },
-    {
-        "id":  "ins_assam_cachar_college_clash_002",
-        "type":  "anomaly",
-        "title":  "Student Clash and Injuries at Cachar College",
-        "description":  "A clash erupted between student groups at Cachar College in Silchar over a hijab-related issue, leaving several students injured.",
-        "severity":  "high",
-        "actionSuggested":  "Increase security around college campuses in Silchar, facilitate peace dialogue with college authorities and student representatives, and ensure medical care for injured students.",
-        "timestamp":  "2026-08-25T11:02:41Z",
-        "scope":  "regional",
-        "state":  "Assam",
-        "country":  "India",
-        "city":  "Silchar",
-        "district":  "Cachar",
-        "latitude":  24.8333,
-        "longitude":  92.7789
     },
     {
         "id":  "ins_assam_flood_management_003",

@@ -8,9 +8,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const geminiKeys = [
-        process.env.GEMINI_API_KEY,
+        process.env.GEMINI_API_KEY_5,
+        process.env.GEMINI_API_KEY_4,
+        process.env.GEMINI_API_KEY_3,
         process.env.GEMINI_API_KEY_2,
-        process.env.GEMINI_API_KEY_3
+        process.env.GEMINI_API_KEY
     ].filter(Boolean) as string[];
 
     if (geminiKeys.length === 0) {

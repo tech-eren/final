@@ -8,7 +8,7 @@ import { CitizenLayout } from './layouts/CitizenLayout';
 import { AuthorityLayout } from './layouts/AuthorityLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 import { ModeratorLayout } from './layouts/ModeratorLayout';
-import { runAutoScrape } from './services/autoScrapeService';
+
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -49,8 +49,8 @@ function Placeholder({ title }: { title: string }) {
 
 function App() {
   useEffect(() => {
-    // Silently scrape the web for nearby civic issues and auto-post them to the Feed
-    runAutoScrape();
+    // Live internet sweep on boot has been disabled.
+    // It is now manually triggered via the Feed's "Run Live Internet Sweep" button.
   }, []);
 
   return (
