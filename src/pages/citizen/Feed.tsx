@@ -129,11 +129,22 @@ export function Feed() {
       );
 
       let totalInsights = 0;
+      let failedSweeps = 0;
+
       for (const result of results) {
-        if (result.status === 'fulfilled' && Array.isArray(result.value) && result.value.length > 0) {
-          await issueService.addCivicInsights(result.value);
-          totalInsights += result.value.length;
+        if (result.status === 'fulfilled') {
+          if (Array.isArray(result.value) && result.value.length > 0) {
+            await issueService.addCivicInsights(result.value);
+            totalInsights += result.value.length;
+          }
+        } else {
+          failedSweeps++;
+          console.error('Sweep failed:', result.reason);
         }
+      }
+
+      if (failedSweeps === sweepConfigs.length) {
+        throw new Error('All sweep requests failed. Backend might be unreachable.');
       }
 
       if (totalInsights === 0) {

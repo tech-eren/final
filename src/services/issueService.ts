@@ -7,7 +7,7 @@ const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v14';
 const defaultIssues: Issue[] = [
   {
     id: 'iss_seed_1',
-    category: 'infrastructure',
+    category: 'Flooding',
     description: 'Waterlogging reportedly occurs even after relatively light rain',
     location: { address: 'Tarapur, Silchar', city: 'Silchar', district: 'Cachar', state: 'Assam', latitude: 24.8333, longitude: 92.7789 },
     severity: 'medium',
@@ -23,7 +23,7 @@ const defaultIssues: Issue[] = [
   },
   {
     id: 'iss_seed_2',
-    category: 'public_service',
+    category: 'Broken Streetlight',
     description: 'Streetlights on Main Street have been out for 3 weeks',
     location: { address: 'Main St, Silchar', city: 'Silchar', district: 'Cachar', state: 'Assam', latitude: 24.82, longitude: 92.8 },
     severity: 'high',

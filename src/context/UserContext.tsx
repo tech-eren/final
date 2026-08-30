@@ -99,6 +99,7 @@ export interface UserSettings {
 }
 
 export interface UserData {
+  id: string;
   displayName: string;
   email: string;
   isAnonymous: boolean;
@@ -217,6 +218,7 @@ const defaultSettings: UserSettings = {
 };
 
 const defaultUser: UserData = {
+  id: 'user-1',
   displayName: 'User Name',
   email: 'user@example.com',
   isAnonymous: false,

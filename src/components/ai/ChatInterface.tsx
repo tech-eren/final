@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { civicAIService } from '../../services/civicAIService';
 import type { CivicAIMessage } from '../../services/civicAIService';
 
-export function ChatInterface({ onAction, role = 'CITIZEN' }: { onAction?: () => void, role?: 'CITIZEN' | 'AUTHORITY' }) {
+export function ChatInterface({ onAction, role = 'CITIZEN' }: { onAction?: () => void, role?: 'CITIZEN' | 'AUTHORITY' | 'ADMIN' }) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<CivicAIMessage[]>([civicAIService.getWelcomeMessage(role)]);
   const [inputValue, setInputValue] = useState('');

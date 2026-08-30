@@ -14,7 +14,7 @@ export interface CivicAIMessage {
 
 export const civicAIService = {
   // Simulates a backend AI request
-  sendMessage: async (query: string, userId: string = 'usr_1', role: 'CITIZEN' | 'AUTHORITY' = 'CITIZEN'): Promise<CivicAIMessage> => {
+  sendMessage: async (query: string, userId: string = 'usr_1', role: 'CITIZEN' | 'AUTHORITY' | 'ADMIN' = 'CITIZEN'): Promise<CivicAIMessage> => {
     return new Promise((resolve) => {
       setTimeout(async () => {
         const q = query.toLowerCase();
@@ -223,7 +223,7 @@ export const civicAIService = {
     });
   },
 
-  getWelcomeMessage: (role: 'CITIZEN' | 'AUTHORITY' = 'CITIZEN'): CivicAIMessage => {
+  getWelcomeMessage: (role: 'CITIZEN' | 'AUTHORITY' | 'ADMIN' = 'CITIZEN'): CivicAIMessage => {
     if (role === 'AUTHORITY') {
       return {
         id: `ai_welcome_auth`,
