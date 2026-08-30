@@ -2,10 +2,12 @@ import { useState, useRef } from 'react';
 import { UploadCloud, MapPin, Sparkles, Loader2, Image as ImageIcon } from 'lucide-react';
 import { LocationPicker } from '../../components/map/LocationPicker';
 import { useToast } from '../../context/ToastContext';
+import { useUser } from '../../context/UserContext';
 import { aiService } from '../../services/aiService';
 import { issueService } from '../../services/issueService';
 
 export function ReportIssue() {
+  const { user } = useUser();
   const [location, setLocation] = useState<[number, number]>([24.83, 92.79]); // Default to Silchar, Assam
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -96,12 +98,24 @@ export function ReportIssue() {
     }
     
     try {
+      let finalImageUrl = previewUrl || '';
+      
+      // Convert to base64 so it persists in localStorage (blob URLs expire)
+      if (selectedFile) {
+        finalImageUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(selectedFile);
+        });
+      }
+
       await issueService.submitIssue({
         title,
         description,
         category: category as any,
         severity: severity as any,
-        imageUrl: previewUrl || '',
+        imageUrl: finalImageUrl,
+        reportedBy: user.id,
         location: {
           latitude: location[0],
           longitude: location[1],
@@ -169,24 +183,12 @@ export function ReportIssue() {
               </div>
             )}
             
-            {/* Auto-fill button */}
-            <button
-              type="button"
-              onClick={handleAutoFill}
-              disabled={isAnalyzing || !selectedFile}
-              className="w-full mt-3 flex items-center justify-center gap-2 bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 px-4 py-3 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-              {isAnalyzing ? 'Analyzing photo...' : 'Auto-fill with AI'}
-            </button>
-            <p className="text-center text-zinc-500 text-xs mt-2">Let our AI analyze the photo and fill out the details for you.</p>
           </div>
 
           {/* Issue Details */}
           <div>
             <div className="flex items-center gap-2 mb-2 mt-8 border-t border-dark-border pt-6">
               <label className="block text-zinc-400 text-sm m-0">2. Issue Details</label>
-              {title && description && <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded-full"><Sparkles className="w-3 h-3"/> AI Assisted</span>}
             </div>
             <div className="space-y-4">
               <div>

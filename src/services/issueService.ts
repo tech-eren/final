@@ -1,10 +1,11 @@
 import type { Issue } from '../types';
+import mockDataFinal from '../data/mockdatafinal.json';
 
 const STORAGE_KEY = 'civic_resolve_issues_v14';
 const STORAGE_KEY_INSIGHTS = 'civic_resolve_insights_v14';
 
 // Seed data for consistent demos
-const defaultIssues: Issue[] = [
+const fallbackSeedIssues: Issue[] = [
   {
     id: 'iss_seed_1',
     category: 'Flooding',
@@ -61,18 +62,67 @@ const defaultIssues: Issue[] = [
   }
 ];
 
+const defaultIssues: Issue[] = (mockDataFinal as unknown as Issue[]).length > 0 
+  ? (mockDataFinal as unknown as Issue[]) 
+  : fallbackSeedIssues;
+
 const SEED_IDS_TO_FORCE = ['iss_seed_1', 'iss_seed_2', 'iss_seed_3'];
+
+// Aggressively clean up any existing duplicates that piled up in localStorage before the fix
+const cleanExistingGarbage = (issues: Issue[]): Issue[] => {
+  const seenIds = new Set<string>();
+  const seenAiTitles = new Set<string>();
+  
+  return issues.filter(issue => {
+    // 1. Drop exact ID duplicates (e.g. from seed force-merges)
+    if (seenIds.has(issue.id)) return false;
+    seenIds.add(issue.id);
+    
+    // 2. Drop AI duplicates based on the title string
+    if (issue.reportedBy === 'sys_ai') {
+      const titleMatch = (issue.description || '').match(/\[AI Detected Insight\] (.*?)\n\n/);
+      const title = titleMatch ? titleMatch[1] : '';
+      if (title && seenAiTitles.has(title)) return false;
+      if (title) seenAiTitles.add(title);
+      
+      // 3. Semantic Hackathon Cleanup: Drop overlapping reports of the same incident
+      const desc = (issue.description || '').toLowerCase();
+      if (desc.includes('nit silchar') && desc.includes('gate') && desc.includes('road')) {
+        if (seenAiTitles.has('NIT_SILCHAR_INCIDENT')) return false;
+        seenAiTitles.add('NIT_SILCHAR_INCIDENT');
+      }
+    } else {
+      // Drop broken manual user submission
+      const desc = (issue.description || '').toLowerCase();
+      if (desc.includes('numereous accidents in this area near smch gate') ||
+          desc.includes('waterlogging reportedly occurs even after relatively light rain')) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+};
 
 // Initialize from localStorage (starts empty on first load)
 const initializeIssues = (): Issue[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    let parsed: Issue[] = [];
-    if (saved) {
-      parsed = JSON.parse(saved);
+    if (!saved) {
+      // If nothing in localStorage, auto-save default and return
+      setTimeout(() => {
+        localIssues = defaultIssues;
+        saveIssues();
+      }, 100);
+      return defaultIssues;
     }
     
-    // Force-merge seeds
+    let parsed: Issue[] = JSON.parse(saved);
+    
+    // Clean up any historical duplicates instantly
+    parsed = cleanExistingGarbage(parsed);
+    
+    // Force-merge seeds (only for fallback seeds if we need them)
     const existingIds = new Set(parsed.map(i => i.id));
     for (const seed of defaultIssues) {
       if (SEED_IDS_TO_FORCE.includes(seed.id) && !existingIds.has(seed.id)) {
@@ -80,8 +130,9 @@ const initializeIssues = (): Issue[] => {
       }
     }
     
-    // Auto-save if we modified it by injecting seeds
-    if (parsed.length > (saved ? JSON.parse(saved).length : 0)) {
+    // Auto-save if we modified it by injecting seeds or cleaning duplicates
+    const originalLength = JSON.parse(saved).length;
+    if (parsed.length !== originalLength) {
        setTimeout(() => {
          localIssues = parsed;
          saveIssues();
@@ -351,24 +402,27 @@ export const issueService = {
 
   addCivicInsights: async (newInsights: any[], userLat?: number, userLng?: number): Promise<any[]> => {
     const taggedInsights = newInsights.map(insight => ({ ...insight, source: 'live-scrape' }));
-    localInsights = [...taggedInsights, ...localInsights];
-    saveInsights();
+    
+    // 1. Update localInsights cache without duplicating
+    const uniqueNewInsights = taggedInsights.filter(newInsight => {
+      return !localInsights.some(existing => 
+        existing.title === newInsight.title && 
+        existing.city === newInsight.city
+      );
+    });
+
+    if (uniqueNewInsights.length > 0) {
+      localInsights = [...uniqueNewInsights, ...localInsights];
+      saveInsights();
+    }
 
     // Use the user's real GPS if provided, otherwise fall back to Silchar city centre
     const baseLat = userLat ?? 24.8333;
     const baseLng = userLng ?? 92.7789;
 
-    // Convert AI insights into actionable Issues for the Feed
-    const deduplicatedInsights = taggedInsights.filter(insight => {
-      // Don't add if we already have an issue with the same exact title or very similar description
-      const exists = localIssues.some(existing => 
-        existing.category === insight.title || 
-        existing.description.includes(insight.title)
-      );
-      return !exists;
-    });
-
-    const newIssues = deduplicatedInsights.map((insight, idx) => {
+    // 2. Map ALL incoming insights (not just uniqueNewInsights) to issues.
+    // If they were wiped from localIssues, this ensures they get recreated!
+    const potentialNewIssues = taggedInsights.map((insight, idx) => {
       let category: any = 'Other';
       const text = (insight.title + ' ' + insight.description).toLowerCase();
       if (text.includes('water') || text.includes('pipe')) category = 'Water Leakage';
@@ -381,10 +435,7 @@ export const issueService = {
       if (text.includes('reddit')) source = 'reddit';
       else if (text.includes('twitter') || text.includes('tweet') || text.includes(' x ')) source = 'x';
 
-      // Always mark as ai_bot so Feed renders the distinct 🤖 AI Detected badge
       const sourcePlatform: any = 'ai_bot';
-
-      // Small jitter (~0-2km) so pins don't all stack on top of each other on the map
       const jitterLat = (Math.random() - 0.5) * 0.03;
       const jitterLng = (Math.random() - 0.5) * 0.03;
 
@@ -415,8 +466,29 @@ export const issueService = {
       };
     });
 
-    if (newIssues.length > 0) {
-      localIssues = [...newIssues, ...localIssues];
+    // Balanced deduplication: allow multiple issues per category, 
+    // but block exact duplicates based on the AI Insight Title.
+    const strictlyDeduplicatedIssues = potentialNewIssues.filter(newIssue => {
+      // Extract the title from the description (which starts with "[AI Detected Insight] Title")
+      const titleMatch = newIssue.description.match(/\[AI Detected Insight\] (.*?)\n\n/);
+      const title = titleMatch ? titleMatch[1] : '';
+
+      const isDuplicate = localIssues.some(existing => 
+        existing.reportedBy === 'sys_ai' &&
+        existing.description.includes(title)
+      );
+      
+      const isDuplicateInBatch = potentialNewIssues.some(other => 
+        other.id !== newIssue.id &&
+        other.description.includes(title) &&
+        other.id < newIssue.id // keep the first one
+      );
+
+      return !isDuplicate && !isDuplicateInBatch;
+    });
+
+    if (strictlyDeduplicatedIssues.length > 0) {
+      localIssues = [...strictlyDeduplicatedIssues, ...localIssues];
       saveIssues();
     }
 
@@ -512,23 +584,4 @@ export const issueService = {
     };
   },
 
-  /**
-   * DEV TOOL: Ages all local issues by a certain number of days to test escalation rules.
-   */
-  devTimeTravel: async (days: number): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const msToAge = days * 24 * 60 * 60 * 1000;
-    
-    localIssues = localIssues.map(issue => {
-      const oldTime = new Date(issue.createdAt).getTime();
-      return {
-        ...issue,
-        createdAt: new Date(oldTime - msToAge).toISOString(),
-        updatedAt: new Date(new Date(issue.updatedAt).getTime() - msToAge).toISOString()
-      };
-    });
-    
-    saveIssues();
-    window.location.reload(); // Refresh the page to reflect aged data
-  }
 };

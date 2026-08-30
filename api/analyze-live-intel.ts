@@ -187,6 +187,7 @@ CRITICAL RULES:
 - The "city", "state", and "country" fields MUST accurately reflect where the issue is actually happening.
 - "state" field is REQUIRED for all results. "country" must always be "India".
 - Do NOT invent or hallucinate issues. Only report what is clearly in the data.
+- DEDUPLICATION: Do NOT return multiple issues that describe the exact same real-world incident or event. If multiple sources talk about the same protest, pothole, or incident, COMBINE them into a SINGLE issue.
 
 Analyze this scraped data and extract 1-4 civic issues (infrastructure, safety, environment, public services, civic problems):
 

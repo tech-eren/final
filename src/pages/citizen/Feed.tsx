@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, ThumbsDown, Bookmark, MapPin, Search, User, TrendingUp, Landmark, ExternalLink, Activity, Layers, Lightbulb, Loader2, RefreshCw } from 'lucide-react';
+import { Heart, ThumbsDown, Bookmark, MapPin, Search, User, TrendingUp, Landmark, ExternalLink, Activity, Layers, Lightbulb, Loader2, RefreshCw, Bot } from 'lucide-react';
 import { issueService } from '../../services/issueService';
 import { useToast } from '../../context/ToastContext';
 import { useUser } from '../../context/UserContext';
@@ -86,7 +86,7 @@ export function Feed() {
         
         const combined: FeedItem[] = [
           ...issueData.map(issue => ({ kind: 'issue' as const, issue })),
-          ...insightData.map(insight => ({ kind: 'insight' as const, insight }))
+          ...insightData.filter(insight => insight.source !== 'live-scrape').map(insight => ({ kind: 'insight' as const, insight }))
         ].sort((a, b) => {
           const tA = a.kind === 'issue' ? new Date(a.issue.createdAt).getTime() : new Date(a.insight.timestamp).getTime();
           const tB = b.kind === 'issue' ? new Date(b.issue.createdAt).getTime() : new Date(b.insight.timestamp).getTime();
@@ -168,7 +168,7 @@ export function Feed() {
       ]);
       const combined: FeedItem[] = [
         ...issueData.map(issue => ({ kind: 'issue' as const, issue })),
-        ...insightData.map(insight => ({ kind: 'insight' as const, insight }))
+        ...insightData.filter(insight => insight.source !== 'live-scrape').map(insight => ({ kind: 'insight' as const, insight }))
       ].sort((a, b) => {
         const tA = a.kind === 'issue' ? new Date(a.issue.createdAt).getTime() : new Date(a.insight.timestamp).getTime();
         const tB = b.kind === 'issue' ? new Date(b.issue.createdAt).getTime() : new Date(b.insight.timestamp).getTime();
@@ -317,7 +317,11 @@ export function Feed() {
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="mb-4 flex items-center gap-3">
-                      {issue.source === 'user' ? (
+                      {issue.sourcePlatform === 'ai_bot' || issue.reportedBy === 'sys_ai' ? (
+                        <div className="flex items-center gap-1.5 bg-violet-500/10 text-violet-400 px-2.5 py-1 rounded-full text-xs font-medium border border-violet-500/20">
+                          <Bot className="w-3 h-3" /> AI Detected
+                        </div>
+                      ) : issue.source === 'user' ? (
                         <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-500/20">
                           <User className="w-3 h-3" /> Citizen Reported
                         </div>

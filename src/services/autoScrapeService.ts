@@ -65,6 +65,9 @@ export async function runAutoScrape(): Promise<void> {
     return;
   }
 
+  // Mark immediately to prevent concurrent executions (e.g. React Strict Mode)
+  markScraped();
+
   console.log('[AutoScrape] Starting background web scrape...');
 
   try {
@@ -96,8 +99,6 @@ export async function runAutoScrape(): Promise<void> {
     } else {
       console.log('[AutoScrape] No insights returned from any live scrape.');
     }
-
-    markScraped();
   } catch (err) {
     console.warn('[AutoScrape] Failed silently:', err);
   }

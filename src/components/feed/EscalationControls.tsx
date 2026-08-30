@@ -174,15 +174,25 @@ export function EscalationControls({ issue, onUpdate }: Props) {
       {/* Rule B: Action Buttons (Only Reporter sees this) */}
       {isReporter && (
         <div className="flex gap-2 flex-wrap mb-4">
-          {(!issue.escalationState || issue.escalationState === 'NONE') && issue.status === 'Submitted' && (
-            <button 
-              onClick={() => handleEscalate('APPEAL_1')}
-              disabled={loading}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-lg transition-colors border border-zinc-700"
-            >
-              File Appeal
-            </button>
-          )}
+          {(!issue.escalationState || issue.escalationState === 'NONE') && issue.status === 'Submitted' && (() => {
+            const daysSinceSubmission = Math.floor((Date.now() - new Date(issue.createdAt).getTime()) / (1000 * 3600 * 24));
+            const daysUntilAppeal = Math.max(0, 30 - daysSinceSubmission);
+            const canAppeal = daysUntilAppeal === 0;
+
+            return (
+              <button 
+                onClick={() => handleEscalate('APPEAL_1')}
+                disabled={loading || !canAppeal}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${
+                  canAppeal 
+                    ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border-zinc-700' 
+                    : 'bg-zinc-800/50 text-zinc-500 border-zinc-800 cursor-not-allowed'
+                }`}
+              >
+                {canAppeal ? 'File Appeal' : `Appeal available in ${daysUntilAppeal} days`}
+              </button>
+            );
+          })()}
 
           {issue.escalationState === 'PETITION_ELIGIBLE' && (
             <button 
