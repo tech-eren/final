@@ -28,8 +28,13 @@ function getUserLocation(): Promise<{ lat: number; lng: number }> {
 }
 
 function shouldScrape(): boolean {
-  // Disabled for the presentation to prevent new AI issues from overlapping with your mock data
-  return false;
+  try {
+    const last = localStorage.getItem(THROTTLE_KEY);
+    if (!last) return true;
+    return Date.now() - parseInt(last, 10) > THROTTLE_MS;
+  } catch {
+    return true;
+  }
 }
 
 function markScraped() {
